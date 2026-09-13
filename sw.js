@@ -1,10 +1,17 @@
-const C = 'prestavka-v1';
+const C = 'prestavka-v2';
 self.addEventListener('install', e => { self.skipWaiting(); });
-self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys => Promise.all(keys.filter(k => k !== C).map(k => caches.delete(k))))
+      .then(() => clients.claim())
+  );
+});
 self.addEventListener('fetch', e => {
+  // Síť má vždy přednost, cache je jen záloha pro offline režim.
   e.respondWith(
-    caches.open(C).then(c => c.match(e.request).then(r =>
-      r || fetch(e.request).then(res => { c.put(e.request, res.clone()); return res; })
-    ))
+    fetch(e.request).then(res => {
+      caches.open(C).then(c => c.put(e.request, res.clone()));
+      return res;
+    }).catch(() => caches.match(e.request))
   );
 });
