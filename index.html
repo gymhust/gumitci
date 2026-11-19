@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Přestávka · studentská cukrárna</title>
-<meta name="theme-color" content="#FAF7F2">
+<meta name="theme-color" content="#F5EFE4">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Přestávka">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..600&family=Fraunces:ital,opsz,SOFT,wght@0,9..144,50,600..800;1,9..144,50,500..700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -17,203 +17,644 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --paper:#FAF7F2;--card:#fff;--ink:#221D18;--ink2:#6E655C;--line:#E9E1D6;
-  --rasp:#D64550;--rasp-deep:#B9323C;--rasp-soft:#F8E9EA;
-  --lime:#8CA94B;--ok:#3E8E5A;--ok-soft:#E6F1E9;--warn:#C07C1E;--warn-soft:#FBF0DE;
-  --fd:'Fraunces',Georgia,serif;--ft:'Space Grotesk','Segoe UI',sans-serif;
+  --paper:#F5EFE4;
+  --paper-deep:#ECE3D3;
+  --card:#FFFDF9;
+  --ink:#1E1916;
+  --ink2:#645B53;
+  --ink3:#91867B;
+  --line:#DDD3C3;
+  --line-strong:#C8BBA6;
+
+  --berry:#C93B2B;
+  --berry-deep:#A62D1F;
+  --berry-soft:#FCEBE8;
+
+  --sour:#558724;
+  --sour-deep:#3F6818;
+  --sour-soft:#EDF5E1;
+
+  --lemon:#EAB826;
+  --lemon-soft:#FDF4D3;
+
+  --ok:#2E7D4F;
+  --ok-soft:#E3F3E9;
+  --warn:#B46914;
+  --warn-soft:#FBF0DC;
+
+  --fd:'Fraunces',Georgia,serif;
+  --ft:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --fm:'IBM Plex Mono',ui-monospace,SFMono-Regular,monospace;
 }
-html,body{height:100%}
-body{background:var(--paper);color:var(--ink);font-family:var(--ft);font-size:16px;line-height:1.45;-webkit-tap-highlight-color:transparent}
-button{font-family:inherit;cursor:pointer;color:inherit}
-.app{max-width:520px;margin:0 auto}
+
+html,body{min-height:100%}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--ft);
+  font-size:15.5px;
+  line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+  background-image:
+    radial-gradient(circle at 12% 8%, rgba(234,184,38,.11), transparent 36%),
+    radial-gradient(circle at 90% 18%, rgba(201,59,43,.07), transparent 38%),
+    radial-gradient(circle at 82% 88%, rgba(85,135,36,.07), transparent 40%);
+  background-attachment:fixed;
+}
+/* jemná struktura papíru */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+  opacity:.03;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+body > *{position:relative;z-index:1}
+
+button{font-family:inherit;cursor:pointer;color:inherit;background:none;border:none}
+input,textarea{font-family:inherit;color:var(--ink)}
+.app{max-width:520px;margin:0 auto;min-height:100dvh}
 
 /* ---------- ikony ---------- */
-.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .ic.sm{width:15px;height:15px}
 
+/* ---------- obrazovky (oprava priority — skryté obrazovky se NIKDY nezobrazí) ---------- */
+.screen{display:none !important}
+.screen.on{display:block !important}
+#auth.screen.on,#setup.screen.on{display:flex !important}
+
 /* ---------- boot ---------- */
-#boot{position:fixed;inset:0;background:var(--paper);z-index:80;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .35s}
-#boot.gone{opacity:0;pointer-events:none}
-#boot .bc{width:120px}
-.spin{width:26px;height:26px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--rasp);animation:rot .8s linear infinite}
+#boot{
+  position:fixed;inset:0;background:var(--paper);z-index:100;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  transition:opacity .32s ease, visibility .32s ease;
+}
+#boot.gone{opacity:0;visibility:hidden;pointer-events:none}
+#boot .boot-stamp{width:88px;height:88px;animation:bob 2.2s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-6px) rotate(3deg)}}
+.spin{
+  width:24px;height:24px;border-radius:50%;
+  border:2.5px solid var(--line);border-top-color:var(--ink);
+  animation:rot .75s linear infinite;
+}
 @keyframes rot{to{transform:rotate(360deg)}}
 
-/* ---------- obrazovky ---------- */
-.screen{display:none}
-.screen.on{display:block}
-
-/* ---------- auth ---------- */
-#auth{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 26px;text-align:center}
-.hero-candy{width:min(62vw,240px);animation:float 4.5s ease-in-out infinite;transition:transform .35s cubic-bezier(.34,1.56,.5,1)}
-.hero-candy.wob{transform:rotate(12deg) scale(1.06)}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
-#auth h1{font-family:var(--fd);font-weight:700;font-size:52px;letter-spacing:-.02em;margin-top:18px;line-height:1}
-#auth .tagline{font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--rasp);font-weight:700;margin-top:10px}
-#auth .hero-sub{color:var(--ink2);max-width:300px;margin:16px auto 0;font-size:15px}
-.auth-actions{display:flex;flex-direction:column;gap:12px;width:100%;max-width:340px;margin-top:38px}
-.auth-foot{margin-top:26px;font-size:12.5px;color:var(--ink2)}
-
 /* ---------- tlačítka ---------- */
-.btn{display:flex;align-items:center;justify-content:center;gap:9px;font-weight:600;font-size:16px;border:none;border-radius:14px;padding:15px 20px;transition:transform .12s,background .15s,box-shadow .2s}
-.btn:active{transform:scale(.97)}
-.btn-primary{background:var(--rasp);color:#fff;box-shadow:0 10px 22px -12px rgba(214,69,80,.6)}
-.btn-primary:hover{background:var(--rasp-deep)}
-.btn-ghost{background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
-.btn-ghost:hover{background:rgba(34,29,24,.05)}
-.btn-line{background:var(--card);border:1.5px solid var(--line);color:var(--ink)}
-.btn-line:hover{border-color:#CFC4B4}
-.btn-sm{padding:9px 15px;font-size:14px;border-radius:11px}
-.iconbtn{width:40px;height:40px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);display:flex;align-items:center;justify-content:center;transition:border-color .15s}
-.iconbtn:hover{border-color:#CFC4B4}
-.mini-btn{border:1.5px solid var(--line);background:var(--card);border-radius:9px;padding:7px 11px;font-size:12.5px;font-weight:600;color:var(--ink2);display:inline-flex;gap:6px;align-items:center;transition:color .15s,border-color .15s}
-.mini-btn:hover{color:var(--ink)}
-.mini-btn.danger{color:var(--rasp);border-color:var(--rasp-soft)}
-.mini-btn.danger:hover{border-color:var(--rasp)}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  font-weight:700;font-size:15.5px;letter-spacing:-.01em;
+  border-radius:13px;padding:13px 18px;
+  transition:transform .1s ease, box-shadow .12s ease, background .15s ease, border-color .15s ease;
+}
+.btn-primary{
+  background:var(--berry);color:#FFFDF9;
+  border:1.5px solid var(--ink);
+  box-shadow:0 3px 0 var(--ink);
+}
+.btn-primary:hover{background:var(--berry-deep)}
+.btn-primary:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+.btn-primary[disabled]{
+  background:var(--paper-deep);color:var(--ink3);border-color:var(--line-strong);
+  box-shadow:none;cursor:not-allowed;transform:none;
+}
 
-/* ---------- hlavička ---------- */
-.topbar{position:sticky;top:0;z-index:20;background:rgba(250,247,242,.93);backdrop-filter:blur(10px);border-bottom:1.5px solid var(--line);display:flex;align-items:center;gap:10px;padding:12px 16px}
+.btn-ghost{
+  background:var(--card);color:var(--ink);
+  border:1.5px solid var(--ink);
+  box-shadow:0 3px 0 rgba(30,25,22,.16);
+}
+.btn-ghost:hover{background:#FAF4E8}
+.btn-ghost:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(30,25,22,.16)}
+
+.btn-line{
+  background:var(--card);color:var(--ink);
+  border:1.5px solid var(--line-strong);
+}
+.btn-line:hover{border-color:var(--ink);background:#FAF5EC}
+.btn-line:active{transform:scale(.98)}
+.btn-sm{padding:9px 14px;font-size:13.5px;border-radius:10px}
+
+.iconbtn{
+  width:38px;height:38px;border-radius:11px;
+  border:1.5px solid var(--line-strong);background:var(--card);
+  display:inline-flex;align-items:center;justify-content:center;
+  color:var(--ink);transition:border-color .15s, background .15s, transform .1s;
+}
+.iconbtn:hover{border-color:var(--ink);background:#FAF4E8}
+.iconbtn:active{transform:scale(.94)}
+
+.mini-btn{
+  border:1.5px solid var(--line-strong);background:var(--card);
+  border-radius:9px;padding:7px 11px;font-size:12.5px;font-weight:600;
+  color:var(--ink2);display:inline-flex;gap:6px;align-items:center;
+  transition:color .15s,border-color .15s,background .15s;
+}
+.mini-btn:hover{color:var(--ink);border-color:var(--ink)}
+.mini-btn.ok{color:var(--ok);border-color:#B7DEC7;background:var(--ok-soft)}
+.mini-btn.ok:hover{border-color:var(--ok)}
+.mini-btn.danger{color:var(--berry);border-color:#F1C3BD;background:var(--berry-soft)}
+.mini-btn.danger:hover{border-color:var(--berry)}
+
+/* ---------- auth (úvodní plakát cukrárny) ---------- */
+#auth{
+  min-height:100dvh;
+  flex-direction:column;align-items:center;justify-content:center;
+  padding:28px 18px 36px;
+}
+.auth-card{
+  width:100%;max-width:410px;
+  background:var(--card);
+  border:1.5px solid var(--ink);
+  border-radius:24px;
+  padding:26px 22px 24px;
+  box-shadow:0 6px 0 var(--ink), 0 24px 44px -26px rgba(30,25,22,.35);
+  text-align:center;
+}
+.shop-kicker{
+  display:inline-flex;align-items:center;gap:7px;
+  font-family:var(--fm);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink2);background:var(--paper);
+  border:1px solid var(--line-strong);border-radius:999px;
+  padding:5px 11px;
+}
+.shop-kicker i{width:7px;height:7px;border-radius:50%;background:var(--sour);display:inline-block}
+.hero-art{
+  width:146px;height:102px;margin:16px auto 6px;cursor:pointer;
+  transition:transform .32s cubic-bezier(.34,1.56,.5,1);
+}
+.hero-art:hover{transform:rotate(-3deg) scale(1.03)}
+.hero-art.wob{transform:rotate(9deg) scale(1.08)}
+.auth-card h1{
+  font-family:var(--fd);font-weight:800;font-size:46px;
+  letter-spacing:-.03em;line-height:1;color:var(--ink);
+}
+.auth-sub{
+  color:var(--ink2);font-size:14.5px;margin:10px auto 0;max-width:300px;
+}
+
+/* tisková mini-nabídka na úvodní obrazovce */
+.menu-slip{
+  margin-top:20px;text-align:left;
+  background:var(--paper);
+  border:1.5px dashed var(--line-strong);
+  border-radius:16px;padding:14px 14px 13px;
+}
+.slip-label{
+  font-family:var(--fm);font-size:10.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink2);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;
+}
+.mix-pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mix-tag{
+  display:flex;align-items:center;gap:9px;
+  background:var(--card);border:1.5px solid var(--line);border-radius:12px;
+  padding:9px 10px;
+}
+.mix-tag.sweet{border-color:#EBC3BC;background:linear-gradient(180deg,#FFFDF9,#FFF5F3)}
+.mix-tag.sour{border-color:#C9DDA9;background:linear-gradient(180deg,#FFFDF9,#F6FAEE)}
+.mix-tag svg{width:34px;height:34px;flex:none}
+.mix-tag b{display:block;font-size:13.5px;line-height:1.15}
+.mix-tag small{display:block;font-size:11.5px;color:var(--ink2);margin-top:2px}
+
+.slip-sep{border:none;border-top:1.5px dashed var(--line-strong);margin:12px 0 11px}
+.floor-bar{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.floor-bar .fb-txt{font-size:12.5px;color:var(--ink2);line-height:1.3}
+.floor-bar .fb-txt strong{color:var(--ink);display:block;font-size:13px}
+.floor-dots{display:flex;gap:5px;flex:none}
+.floor-dot{
+  width:29px;height:29px;border-radius:8px;
+  background:var(--card);border:1.5px solid var(--ink);
+  font-family:var(--fm);font-size:12.5px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 0 rgba(30,25,22,.14);
+}
+
+.auth-actions{display:flex;flex-direction:column;gap:10px;margin-top:20px}
+.auth-actions .btn{width:100%}
+.auth-foot{margin-top:14px;font-size:12px;color:var(--ink3)}
+
+/* ---------- hlavička přihlášené aplikace ---------- */
+.topbar{
+  position:sticky;top:0;z-index:20;
+  background:rgba(245,239,228,.92);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-bottom:1.5px solid var(--line);
+  display:flex;align-items:center;gap:9px;padding:11px 16px;
+}
 .topbar .brand{display:flex;align-items:center;gap:9px;min-width:0}
-.topbar .brand svg{width:38px;height:24px;flex:none}
-.topbar .brand b{font-family:var(--fd);font-size:21px;font-weight:700;letter-spacing:-.01em;white-space:nowrap}
+.topbar .brand-mark{
+  width:34px;height:34px;border-radius:10px;
+  background:var(--card);border:1.5px solid var(--ink);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 0 var(--ink);flex:none;
+}
+.topbar .brand-mark svg{width:24px;height:24px}
+.topbar .brand-txt{min-width:0}
+.topbar .brand-txt b{
+  display:block;font-family:var(--fd);font-size:20px;font-weight:800;
+  letter-spacing:-.02em;line-height:1.05;white-space:nowrap;
+}
+.topbar .brand-txt span{
+  display:block;font-size:11.5px;color:var(--ink2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;
+}
 .topbar .sp{flex:1}
-.badge{font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:4px 9px;border-radius:7px;white-space:nowrap}
-.badge.owner{background:var(--rasp-soft);color:var(--rasp)}
+.badge{
+  font-family:var(--fm);font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  padding:4px 8px;border-radius:7px;white-space:nowrap;border:1px solid transparent;
+}
+.badge.owner{background:var(--berry-soft);color:var(--berry);border-color:#EBC3BC}
 .badge.dev{background:var(--ink);color:var(--paper)}
+.badge.user{background:var(--paper-deep);color:var(--ink2);border-color:var(--line)}
 
-/* ---------- views + tabbar ---------- */
-main{padding:18px 16px 118px}
+/* ---------- hlavní obsah + tabbar ---------- */
+main{padding:16px 16px 116px}
 .view{display:none}
-.view.on{display:block;animation:rise .28s ease}
-@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.viewhead{margin:4px 2px 16px}
-.viewhead h2{font-family:var(--fd);font-size:27px;font-weight:700;letter-spacing:-.01em}
-.viewhead p{color:var(--ink2);font-size:13.5px;margin-top:3px}
-.tabbar{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;display:flex;background:var(--card);border-top:1.5px solid var(--line);padding:7px 8px calc(7px + env(safe-area-inset-bottom));z-index:30}
-.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:7px 4px 5px;font-size:10.5px;font-weight:600;letter-spacing:.02em;color:var(--ink2);border:none;background:none;border-radius:11px;transition:color .15s}
-.tab.active{color:var(--rasp)}
+.view.on{display:block;animation:rise .24s ease}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
-/* ---------- produkty ---------- */
-.product{background:var(--card);border:1.5px solid var(--line);border-radius:20px;padding:15px;display:flex;gap:13px;margin-bottom:14px;position:relative}
-.p-vis{width:74px;flex:none;display:flex;align-items:center}
-.p-vis svg{width:74px;height:46px}
-.p-info{flex:1;min-width:0;padding-left:12px;border-left:1.5px dashed var(--line)}
-.p-info h3{font-family:var(--fd);font-size:19px;font-weight:700}
-.p-desc{color:var(--ink2);font-size:13px;margin-top:2px}
-.p-stock{font-size:12px;font-weight:600;color:var(--ink2);margin-top:7px}
+.viewhead{margin:2px 2px 14px}
+.viewhead h2{font-family:var(--fd);font-size:28px;font-weight:800;letter-spacing:-.025em;line-height:1.1}
+.viewhead p{color:var(--ink2);font-size:13.5px;margin-top:4px}
+
+/* uvítací informační lístek v nabídce */
+.shop-banner{
+  background:var(--card);
+  border:1.5px solid var(--ink);
+  border-radius:18px;
+  padding:14px 15px;
+  margin-bottom:16px;
+  box-shadow:0 4px 0 rgba(30,25,22,.12);
+}
+.sb-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.sb-top h3{font-family:var(--fd);font-size:18px;font-weight:700;line-height:1.2}
+.sb-top p{font-size:13px;color:var(--ink2);margin-top:4px;line-height:1.45}
+.sb-top p strong{color:var(--ink)}
+.sb-pills{
+  display:flex;flex-wrap:wrap;align-items:center;gap:6px;
+  margin-top:11px;padding-top:11px;border-top:1.5px dashed var(--line);
+}
+.sb-pill{
+  font-size:12px;font-weight:600;padding:4px 9px;border-radius:8px;
+  display:inline-flex;align-items:center;gap:5px;border:1px solid transparent;
+}
+.sb-pill.sweet{background:var(--berry-soft);color:var(--berry-deep);border-color:#F0C7C1}
+.sb-pill.sour{background:var(--sour-soft);color:var(--sour-deep);border-color:#CBE0AB}
+.sb-pill.floors{
+  margin-left:auto;background:var(--paper);color:var(--ink);
+  border-color:var(--line-strong);font-family:var(--fm);font-size:11.5px;
+}
+
+/* tabbar */
+.tabbar-wrap{
+  position:fixed;bottom:0;left:0;right:0;z-index:30;
+  pointer-events:none;
+  padding:0 12px calc(10px + env(safe-area-inset-bottom));
+}
+.tabbar{
+  pointer-events:auto;
+  max-width:496px;margin:0 auto;
+  display:flex;gap:4px;
+  background:rgba(255,253,249,.96);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1.5px solid var(--ink);
+  border-radius:18px;
+  padding:5px;
+  box-shadow:0 4px 0 rgba(30,25,22,.16), 0 12px 24px -10px rgba(30,25,22,.22);
+}
+.tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  padding:7px 4px 6px;font-size:11px;font-weight:700;letter-spacing:.01em;
+  color:var(--ink2);border-radius:13px;transition:background .15s,color .15s;
+}
+.tab:hover{color:var(--ink)}
+.tab.active{background:var(--ink);color:var(--paper)}
+.tab .ic{width:19px;height:19px}
+
+/* ---------- karty produktů ---------- */
+.product{
+  background:var(--card);
+  border:1.5px solid var(--line-strong);
+  border-radius:20px;
+  padding:15px;
+  margin-bottom:14px;
+  box-shadow:0 3px 0 #E4DAC9;
+  transition:border-color .15s, transform .15s;
+}
+.product.is-sweet{border-color:#E5BFB8;box-shadow:0 3px 0 #EFE0DC}
+.product.is-sour{border-color:#C3D8A4;box-shadow:0 3px 0 #E2EBD4}
+.product.is-out{opacity:.78}
+
+.p-head{display:flex;gap:14px;align-items:flex-start}
+.p-vis{
+  width:74px;height:74px;flex:none;border-radius:15px;
+  background:var(--paper);border:1.5px solid var(--line);
+  display:flex;align-items:center;justify-content:center;padding:8px;
+}
+.product.is-sweet .p-vis{background:var(--berry-soft);border-color:#EFC5BE}
+.product.is-sour .p-vis{background:var(--sour-soft);border-color:#C9DFA7}
+.p-vis svg{width:56px;height:56px}
+
+.p-info{flex:1;min-width:0}
+.p-kicker-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px}
+.p-flavor{
+  font-family:var(--fm);font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink2);
+}
+.product.is-sweet .p-flavor{color:var(--berry)}
+.product.is-sour .p-flavor{color:var(--sour)}
+
+.p-info h3{font-family:var(--fd);font-size:21px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+.p-desc{color:var(--ink2);font-size:13.5px;margin-top:4px;line-height:1.42}
+
+.p-stock{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--fm);font-size:11.5px;font-weight:600;
+  color:var(--ok);margin-top:8px;
+}
+.p-stock::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
 .p-stock.low{color:var(--warn)}
-.p-stock.out{color:var(--rasp)}
-.p-buy{display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:8px;flex:none}
-.p-price{font-family:var(--fd);font-size:21px;font-weight:700;white-space:nowrap}
-.p-price span{font-size:12px;font-family:var(--ft);font-weight:600;color:var(--ink2)}
-.p-edit{position:absolute;top:11px;right:11px;width:32px;height:32px;border-radius:9px;border:1.5px solid var(--line);background:var(--card);display:flex;align-items:center;justify-content:center;color:var(--ink2)}
-.btn-order{padding:10px 16px;font-size:14.5px}
-.btn-order[disabled]{background:var(--line);color:var(--ink2);box-shadow:none;cursor:default}
-.foot{display:flex;justify-content:center;padding:20px 0 4px}
-.secret{width:36px;height:36px;border-radius:50%;border:none;background:transparent;color:#CFC5B6;display:flex;align-items:center;justify-content:center;transition:color .2s,transform .2s}
-.secret:hover{color:var(--ink2)}
-.secret:active{transform:scale(.88)}
+.p-stock.out{color:var(--berry)}
 
-/* ---------- karty objednávek / účtů ---------- */
-.o-card{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:14px 15px;margin-bottom:11px}
+.p-foot{
+  margin-top:13px;padding-top:12px;border-top:1.5px dashed var(--line);
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+.p-price{font-family:var(--fm);font-size:20px;font-weight:600;letter-spacing:-.03em;white-space:nowrap}
+.p-price span{font-family:var(--ft);font-size:12px;font-weight:500;color:var(--ink2)}
+.p-foot-acts{display:flex;align-items:center;gap:8px}
+.p-edit{
+  width:38px;height:38px;border-radius:11px;
+  border:1.5px solid var(--line-strong);background:var(--paper);
+  display:inline-flex;align-items:center;justify-content:center;color:var(--ink2);
+  transition:border-color .15s,color .15s;
+}
+.p-edit:hover{border-color:var(--ink);color:var(--ink)}
+.btn-order{padding:10px 16px;font-size:14.5px;border-radius:11px}
+.product.is-sour .btn-order:not([disabled]){background:var(--sour)}
+.product.is-sour .btn-order:not([disabled]):hover{background:var(--sour-deep)}
+
+.foot{display:flex;justify-content:center;padding:20px 0 4px}
+.secret{
+  width:34px;height:34px;border-radius:50%;color:#CEC4B4;
+  display:flex;align-items:center;justify-content:center;
+  transition:color .2s,transform .2s;
+}
+.secret:hover{color:var(--ink2)}
+.secret:active{transform:scale(.86)}
+
+/* ---------- statistiky a filtry v adminu ---------- */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.stat-box{
+  background:var(--card);border:1.5px solid var(--line-strong);border-radius:14px;
+  padding:10px 11px;
+}
+.stat-box small{display:block;font-size:11px;color:var(--ink2);font-weight:600}
+.stat-box b{display:block;font-family:var(--fm);font-size:16px;margin-top:3px;letter-spacing:-.02em}
+.filter-row{display:flex;gap:6px;margin-bottom:13px;overflow-x:auto;padding-bottom:2px}
+.f-chip{
+  border:1.5px solid var(--line-strong);background:var(--card);
+  border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:600;color:var(--ink2);
+  white-space:nowrap;transition:all .15s;
+}
+.f-chip.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+
+/* ---------- karty objednávek / účtů (účtenkový styl) ---------- */
+.o-card{
+  background:var(--card);border:1.5px solid var(--line-strong);
+  border-radius:17px;padding:14px 15px;margin-bottom:11px;
+  box-shadow:0 2px 0 #E5DCCB;
+}
 .o-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
-.o-row strong{font-weight:700;font-size:15px}
-.o-total{font-family:var(--fd);font-weight:700;font-size:16px;white-space:nowrap}
-.o-meta{color:var(--ink2);font-size:12.5px;margin-top:3px}
-.o-note{margin-top:9px;font-size:13px;background:var(--paper);border-radius:10px;padding:8px 11px;color:var(--ink)}
-.o-note b{color:var(--ink2);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:2px}
-.o-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-.pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:999px}
-.pill.cash{background:#F1EDE5;color:var(--ink2)}
+.o-row strong{font-weight:700;font-size:15.5px}
+.o-total{font-family:var(--fm);font-weight:600;font-size:15.5px;white-space:nowrap}
+.o-meta{
+  display:flex;flex-wrap:wrap;align-items:center;gap:6px;
+  color:var(--ink2);font-size:12.5px;margin-top:6px;
+}
+.o-loc{
+  display:inline-flex;align-items:center;gap:4px;
+  background:var(--lemon-soft);color:var(--ink);
+  border:1px solid #E5CE7E;border-radius:7px;
+  padding:2px 8px;font-weight:700;font-size:12px;
+}
+.o-note{
+  margin-top:10px;font-size:13px;background:var(--paper);
+  border:1px dashed var(--line-strong);border-radius:10px;padding:8px 11px;color:var(--ink);
+}
+.o-note b{
+  color:var(--ink2);font-family:var(--fm);font-weight:600;font-size:10.5px;
+  text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:2px;
+}
+.o-pills{
+  display:flex;flex-wrap:wrap;gap:6px;margin-top:11px;
+  padding-top:10px;border-top:1.5px dashed var(--line);
+}
+.pill{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:8px;
+}
+.pill.cash{background:var(--paper-deep);color:var(--ink2)}
 .pill.ok{background:var(--ok-soft);color:var(--ok)}
 .pill.warn{background:var(--warn-soft);color:var(--warn)}
-.o-acts{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}
-.u-pass{display:flex;align-items:center;gap:8px;margin-top:7px;font-size:13.5px}
-.u-pass code{background:var(--paper);padding:3px 8px;border-radius:7px;font-family:var(--ft)}
-.empty{text-align:center;color:var(--ink2);padding:38px 10px;font-size:14.5px}
-.empty svg{width:74px;height:46px;opacity:.35;margin-bottom:12px}
+.o-acts{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.u-pass{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:var(--ink2)}
+.u-pass code{background:var(--paper);border:1px solid var(--line);padding:3px 8px;border-radius:7px;font-family:var(--fm);color:var(--ink)}
+.empty{
+  text-align:center;color:var(--ink2);padding:38px 18px;font-size:14.5px;
+  background:var(--card);border:1.5px dashed var(--line-strong);border-radius:18px;
+}
+.empty svg{width:64px;height:64px;margin-bottom:10px;opacity:.85}
 
 /* ---------- formuláře ---------- */
 .field{margin-bottom:14px}
-.field label{display:block;font-size:12.5px;font-weight:700;letter-spacing:.02em;color:var(--ink2);margin-bottom:6px}
-.input,textarea{width:100%;font:inherit;padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--card);transition:border-color .15s;resize:none}
-.input:focus,textarea:focus{border-color:var(--rasp);outline:none}
-.err{color:var(--rasp);font-size:13px;margin:6px 2px 0;font-weight:500}
-.hr{height:1.5px;background:var(--line);margin:22px 0;border:none}
-.sheet-sub{color:var(--ink2);font-size:14px;margin-bottom:16px}
-.sheet-actions{display:flex;gap:10px;margin-top:6px}
+.field label{
+  display:block;font-size:12.5px;font-weight:700;letter-spacing:.01em;
+  color:var(--ink);margin-bottom:6px;
+}
+.field label span{font-weight:500;color:var(--ink2)}
+.input,textarea{
+  width:100%;font-size:15px;padding:12px 13px;
+  border:1.5px solid var(--line-strong);border-radius:12px;
+  background:var(--card);transition:border-color .15s, box-shadow .15s;resize:none;
+}
+.input:focus,textarea:focus{border-color:var(--ink);outline:none;box-shadow:0 0 0 3px rgba(30,25,22,.08)}
+.err{
+  color:var(--berry-deep);background:var(--berry-soft);border:1px solid #EFC5BE;
+  border-radius:10px;padding:9px 12px;font-size:13px;margin:8px 0 6px;font-weight:600;
+}
+.hr{height:0;border:none;border-top:1.5px dashed var(--line-strong);margin:20px 0}
+.sheet-sub{color:var(--ink2);font-size:14px;margin:6px 0 16px}
+.sheet-actions{display:flex;gap:10px;margin-top:10px}
 .sheet-actions .btn{flex:1}
 
+/* volič patra (0, 1, 2, 3) */
+.floor-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.floor-btn{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  padding:11px 6px;border-radius:13px;
+  border:1.5px solid var(--line-strong);background:var(--card);
+  transition:all .14s ease;
+}
+.floor-btn:hover{border-color:var(--ink);background:var(--paper)}
+.floor-btn b{font-family:var(--fm);font-size:20px;line-height:1.1}
+.floor-btn span{font-size:11px;font-weight:600;color:var(--ink2);white-space:nowrap}
+.floor-btn.sel{
+  background:var(--ink);color:var(--paper);border-color:var(--ink);
+  box-shadow:0 3px 0 rgba(30,25,22,.22);transform:translateY(-1px);
+}
+.floor-btn.sel span{color:#D5CCBE}
+
 /* výběr platby */
-.pay-opt{display:flex;gap:12px;align-items:center;padding:13px 14px;border:1.5px solid var(--line);border-radius:14px;margin-bottom:9px;background:var(--card);transition:border-color .15s;text-align:left;width:100%}
-.pay-opt.sel{border-color:var(--rasp);background:var(--rasp-soft)}
+.pay-opt{
+  display:flex;gap:12px;align-items:center;padding:12px 13px;
+  border:1.5px solid var(--line-strong);border-radius:14px;margin-bottom:8px;
+  background:var(--card);transition:all .15s;text-align:left;width:100%;
+}
+.pay-opt:hover{border-color:var(--ink)}
+.pay-opt.sel{border-color:var(--ink);background:var(--paper);box-shadow:0 2px 0 rgba(30,25,22,.14)}
 .pay-opt .ic{color:var(--ink2)}
-.pay-opt.sel .ic{color:var(--rasp)}
+.pay-opt.sel .ic{color:var(--berry)}
 .pay-opt b{display:block;font-size:14.5px}
 .pay-opt small{color:var(--ink2);font-size:12px}
-.pay-opt .dot{width:19px;height:19px;border-radius:50%;border:2px solid var(--line);flex:none;margin-left:auto;position:relative}
-.pay-opt.sel .dot{border-color:var(--rasp)}
-.pay-opt.sel .dot::after{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--rasp)}
+.pay-opt .dot{
+  width:19px;height:19px;border-radius:50%;border:2px solid var(--line-strong);
+  flex:none;margin-left:auto;position:relative;
+}
+.pay-opt.sel .dot{border-color:var(--ink)}
+.pay-opt.sel .dot::after{
+  content:'';position:absolute;inset:3px;border-radius:50%;background:var(--berry);
+}
 
 /* volič místností */
-.chiprow{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
-.chip{border:1.5px solid var(--line);background:var(--card);border-radius:999px;padding:8px 14px;font-size:13.5px;font-weight:600;display:inline-flex;align-items:center;gap:7px;transition:border-color .15s}
-.chip:hover{border-color:#CFC4B4}
-.chip.sel{border-color:var(--rasp);color:var(--rasp);background:var(--rasp-soft)}
+.chiprow{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{
+  border:1.5px solid var(--line-strong);background:var(--card);
+  border-radius:10px;padding:6px 11px;font-size:13px;font-weight:600;
+  display:inline-flex;align-items:center;gap:6px;transition:all .14s;
+}
+.chip:hover{border-color:var(--ink);background:var(--paper)}
+.chip.sel{border-color:var(--ink);color:var(--paper);background:var(--ink)}
 
 /* počet kusů */
-.stepper{display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}
-.stepper button{width:46px;height:46px;border:none;background:none;font-size:22px;font-weight:500;color:var(--ink)}
-.stepper button:disabled{color:var(--line)}
-.stepper b{width:44px;text-align:center;font-size:17px}
-.ord-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
-.ord-top .ttl{display:flex;align-items:center;gap:11px}
-.ord-top .ttl svg{width:56px;height:35px}
-.ord-top .ttl b{font-family:var(--fd);font-size:19px}
-.ord-top .ttl small{display:block;color:var(--ink2);font-size:12.5px}
+.stepper{
+  display:inline-flex;align-items:center;
+  border:1.5px solid var(--ink);border-radius:12px;overflow:hidden;
+  background:var(--card);box-shadow:0 2px 0 rgba(30,25,22,.14);
+}
+.stepper button{width:40px;height:40px;font-size:20px;font-weight:700;color:var(--ink);transition:background .12s}
+.stepper button:hover:not(:disabled){background:var(--paper)}
+.stepper button:disabled{color:var(--line-strong);cursor:default}
+.stepper b{width:36px;text-align:center;font-family:var(--fm);font-size:16px}
+.ord-top{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-top:36px;padding-bottom:14px;margin-bottom:14px;border-bottom:1.5px dashed var(--line);
+}
+.ord-top .ttl{display:flex;align-items:center;gap:11px;min-width:0}
+.ord-top .ttl svg{width:46px;height:46px;flex:none}
+.ord-top .ttl b{font-family:var(--fd);font-size:19px;font-weight:800;display:block;line-height:1.1}
+.ord-top .ttl small{display:block;color:var(--ink2);font-size:12.5px;font-family:var(--fm);margin-top:2px}
 
 /* QR */
-.qr-wrap{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:14px;width:236px;margin:14px auto 4px}
-.qr-amount{font-family:var(--fd);font-size:30px;font-weight:700;text-align:center;margin-top:12px}
+.qr-wrap{
+  background:#fff;border:1.5px solid var(--ink);border-radius:16px;
+  padding:14px;width:236px;margin:12px auto 4px;
+  box-shadow:0 4px 0 rgba(30,25,22,.12);
+}
+.qr-amount{font-family:var(--fm);font-size:28px;font-weight:600;text-align:center;margin-top:12px}
 .qr-note{text-align:center;color:var(--ink2);font-size:12.5px;margin:6px 0 14px}
 
-/* ---------- sheet ---------- */
-.sheet{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-end;justify-content:center;visibility:hidden;transition:visibility 0s .32s}
+/* ---------- bottom sheet ---------- */
+.sheet{
+  position:fixed;inset:0;z-index:50;
+  display:flex;align-items:flex-end;justify-content:center;
+  visibility:hidden;transition:visibility 0s .28s;
+}
 .sheet.open{visibility:visible;transition:none}
-.sheet .scrim{position:absolute;inset:0;background:rgba(30,25,20,.45);opacity:0;transition:opacity .28s}
+.sheet .scrim{
+  position:absolute;inset:0;background:rgba(30,25,22,.5);
+  backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
+  opacity:0;transition:opacity .25s;
+}
 .sheet.open .scrim{opacity:1}
-.sheet .panel{position:relative;width:100%;max-width:520px;max-height:90dvh;overflow-y:auto;background:var(--card);border-radius:26px 26px 0 0;padding:14px 22px calc(24px + env(safe-area-inset-bottom));transform:translateY(102%);transition:transform .32s cubic-bezier(.32,.72,.25,1)}
+.sheet .panel{
+  position:relative;width:100%;max-width:520px;max-height:92dvh;overflow-y:auto;
+  background:var(--card);
+  border:1.5px solid var(--ink);border-bottom:none;
+  border-radius:24px 24px 0 0;
+  padding:12px 20px calc(24px + env(safe-area-inset-bottom));
+  transform:translateY(102%);transition:transform .3s cubic-bezier(.32,.72,.25,1);
+}
 .sheet.open .panel{transform:none}
-.grab{width:42px;height:5px;border-radius:3px;background:var(--line);margin:4px auto 14px}
-.sheet-x{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:10px;border:none;background:var(--paper);display:flex;align-items:center;justify-content:center;color:var(--ink2)}
-.panel h3{font-family:var(--fd);font-size:23px;font-weight:700;padding-right:36px}
-.panel h3.small{font-size:19px;margin-top:2px}
+.grab{width:40px;height:4.5px;border-radius:3px;background:var(--line-strong);margin:2px auto 14px}
+.sheet-x{
+  position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:10px;
+  background:var(--paper);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;color:var(--ink2);
+}
+.sheet-x:hover{color:var(--ink);border-color:var(--ink)}
+.panel h3{font-family:var(--fd);font-size:23px;font-weight:800;letter-spacing:-.02em;padding-right:36px}
+.panel h3.small{font-size:18px;margin-top:2px}
 
 /* ---------- toast ---------- */
-#toasts{position:fixed;top:calc(14px + env(safe-area-inset-top));left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:90;pointer-events:none;padding:0 20px}
-.toast{background:var(--ink);color:#fff;padding:12px 20px;border-radius:13px;font-size:14px;font-weight:500;box-shadow:0 14px 30px -12px rgba(34,29,24,.45);max-width:100%;display:flex;gap:9px;align-items:center;animation:tIn .28s cubic-bezier(.34,1.4,.5,1),tOut .3s 3s forwards}
+#toasts{
+  position:fixed;top:calc(14px + env(safe-area-inset-top));left:0;right:0;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  z-index:110;pointer-events:none;padding:0 16px;
+}
+.toast{
+  background:var(--ink);color:var(--paper);
+  border:1.5px solid var(--ink);
+  padding:11px 16px;border-radius:13px;font-size:13.5px;font-weight:600;
+  box-shadow:0 12px 26px -10px rgba(30,25,22,.45);
+  max-width:100%;display:flex;gap:9px;align-items:center;
+  animation:tIn .26s cubic-bezier(.34,1.4,.5,1),tOut .28s 3s forwards;
+}
 .toast .ic{width:17px;height:17px}
-.toast.err{background:var(--rasp)}
-@keyframes tIn{from{opacity:0;transform:translateY(-14px) scale(.95)}to{opacity:1;transform:none}}
+.toast.err{background:var(--berry);color:#fff;border-color:var(--berry-deep)}
+@keyframes tIn{from{opacity:0;transform:translateY(-12px) scale(.96)}to{opacity:1;transform:none}}
 @keyframes tOut{to{opacity:0;transform:translateY(-10px)}}
 
 /* ---------- setup ---------- */
-#setup{min-height:100dvh;display:flex;flex-direction:column;justify-content:center;padding:30px 24px}
-#setup .box{max-width:420px;margin:0 auto;background:var(--card);border:1.5px solid var(--line);border-radius:22px;padding:26px 24px}
-#setup h2{font-family:var(--fd);font-size:26px}
+#setup{min-height:100dvh;flex-direction:column;justify-content:center;padding:30px 20px}
+#setup .box{
+  max-width:420px;margin:0 auto;background:var(--card);
+  border:1.5px solid var(--ink);border-radius:22px;padding:24px 22px;
+  box-shadow:0 5px 0 var(--ink);
+}
+#setup h2{font-family:var(--fd);font-size:25px}
 #setup ol{margin:14px 0 0 20px;font-size:14px;color:var(--ink2);line-height:1.7}
-#setup code{background:var(--paper);padding:2px 7px;border-radius:6px;font-size:12.5px}
+#setup code{background:var(--paper);padding:2px 7px;border-radius:6px;font-family:var(--fm);font-size:12px}
+
+@media (max-width:380px){
+  .mix-pair{grid-template-columns:1fr}
+  .auth-card{padding:22px 16px}
+  .auth-card h1{font-size:40px}
+}
 </style>
 </head>
 <body>
 
 <div id="boot">
-  <svg class="bc" viewBox="0 0 220 130" aria-hidden="true"><path fill="#D64550" d="M80 65 C62 52 40 42 30 46 C20 50 22 62 22 65 C22 68 20 80 30 84 C40 88 62 78 80 65 Z"/><path fill="#D64550" d="M140 65 C158 52 180 42 190 46 C200 50 198 62 198 65 C198 68 200 80 190 84 C180 88 158 78 140 65 Z"/><rect fill="#D64550" x="76" y="41" width="68" height="48" rx="24"/><path d="M104 47 q7 18 0 36 M116 45 q7 20 0 40" fill="none" stroke="#FAF7F2" stroke-width="4" stroke-linecap="round" opacity=".6"/></svg>
+  <svg class="boot-stamp" viewBox="0 0 120 120" aria-hidden="true">
+    <circle cx="60" cy="60" r="52" fill="#FFFDF9" stroke="#1E1916" stroke-width="3"/>
+    <circle cx="60" cy="60" r="44" fill="none" stroke="#DDD3C3" stroke-width="1.5" stroke-dasharray="4 4"/>
+    <g transform="rotate(-14 60 60)">
+      <path d="M35 60 L20 48 L24 60 L20 72 Z" fill="#C93B2B" stroke="#1E1916" stroke-width="2.6" stroke-linejoin="round"/>
+      <path d="M85 60 L100 48 L96 60 L100 72 Z" fill="#C93B2B" stroke="#1E1916" stroke-width="2.6" stroke-linejoin="round"/>
+      <rect x="35" y="42" width="50" height="36" rx="18" fill="#C93B2B" stroke="#1E1916" stroke-width="2.6"/>
+      <path d="M51 44 C56 54 56 66 51 76 M66 44 C71 54 71 66 66 76" fill="none" stroke="#FFFDF9" stroke-width="3.2" stroke-linecap="round"/>
+    </g>
+  </svg>
   <div class="spin"></div>
 </div>
 
 <div id="toasts"></div>
 
-<!-- obrazovka: chybí Firebase config -->
+<!-- obrazovka: chybí Firebase config (zobrazí se jen pokud chybí konfigurace) -->
 <div id="setup" class="screen">
   <div class="box">
     <h2>Chybí nastavení Firebase</h2>
@@ -227,54 +668,167 @@ main{padding:18px 16px 118px}
   </div>
 </div>
 
-<!-- hlavní obrazovka bez přihlášení -->
+<!-- úvodní obrazovka bez přihlášení (po přihlášení úplně zmizí) -->
 <div id="auth" class="screen">
-  <div class="hero-candy" id="heroCandy">
-    <svg viewBox="0 0 220 130" aria-hidden="true"><path fill="#D64550" d="M80 65 C62 52 40 42 30 46 C20 50 22 62 22 65 C22 68 20 80 30 84 C40 88 62 78 80 65 Z"/><path fill="#D64550" d="M140 65 C158 52 180 42 190 46 C200 50 198 62 198 65 C198 68 200 80 190 84 C180 88 158 78 140 65 Z"/><rect fill="#D64550" x="76" y="41" width="68" height="48" rx="24"/><path d="M104 47 q7 18 0 36 M116 45 q7 20 0 40" fill="none" stroke="#FAF7F2" stroke-width="4" stroke-linecap="round" opacity=".6"/></svg>
+  <div class="auth-card">
+    <div class="shop-kicker"><i></i> Studentská cukrárna · přestávka</div>
+    <div class="hero-art" id="heroCandy" title="Klikni pro zatřesení">
+      <svg viewBox="0 0 180 120" aria-hidden="true">
+        <!-- jemný stín pod bonbóny -->
+        <ellipse cx="90" cy="106" rx="64" ry="8" fill="#E8DEC9"/>
+        <!-- levý sladký bonbón -->
+        <g transform="translate(8,8) rotate(-14 55 56)">
+          <path d="M29 56 L12 43 L17 56 L12 69 Z" fill="#C93B2B" stroke="#1E1916" stroke-width="2.6" stroke-linejoin="round"/>
+          <path d="M81 56 L98 43 L93 56 L98 69 Z" fill="#C93B2B" stroke="#1E1916" stroke-width="2.6" stroke-linejoin="round"/>
+          <rect x="29" y="38" width="52" height="36" rx="18" fill="#C93B2B" stroke="#1E1916" stroke-width="2.6"/>
+          <path d="M46 40 C51 50 51 62 46 72 M61 40 C66 50 66 62 61 72" fill="none" stroke="#FFFDF9" stroke-width="3.2" stroke-linecap="round"/>
+          <circle cx="38" cy="48" r="2.2" fill="#FFFDF9"/>
+        </g>
+        <!-- pravý kyselý šumivý želé kousek -->
+        <g transform="translate(88,26) rotate(12 38 38)">
+          <path d="M16 44 C10 26 24 12 42 14 C58 16 68 30 62 48 C56 64 22 62 16 44 Z" fill="#6F9F34" stroke="#1E1916" stroke-width="2.6"/>
+          <path d="M26 30 C32 23 44 23 49 28" fill="none" stroke="#EAF5D3" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="28" cy="46" r="1.9" fill="#FFFDF9"/>
+          <circle cx="44" cy="44" r="1.9" fill="#FFFDF9"/>
+          <circle cx="37" cy="36" r="1.7" fill="#FFFDF9"/>
+          <circle cx="51" cy="37" r="1.6" fill="#FFFDF9"/>
+        </g>
+        <!-- malý žlutý citronový drop -->
+        <circle cx="96" cy="28" r="11" fill="#EAB826" stroke="#1E1916" stroke-width="2.4"/>
+        <path d="M92 24 C94 21 98 21 100 23" fill="none" stroke="#FFFDF9" stroke-width="2.2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <h1>Přestávka</h1>
+    <p class="auth-sub">Objednej si za pár vteřin a nech si sladkosti donést přímo na své patro.</p>
+
+    <div class="menu-slip">
+      <div class="slip-label"><span>Co si můžeš objednat</span><span>čerstvě baleno</span></div>
+      <div class="mix-pair">
+        <div class="mix-tag sweet">
+          <svg viewBox="0 0 64 64" aria-hidden="true">
+            <rect x="6" y="6" width="52" height="52" rx="14" fill="#FCEBE8"/>
+            <g transform="rotate(-16 32 32)">
+              <path d="M20 32 L11 24 L14 32 L11 40 Z" fill="#C93B2B" stroke="#1E1916" stroke-width="2.2" stroke-linejoin="round"/>
+              <path d="M44 32 L53 24 L50 32 L53 40 Z" fill="#C93B2B" stroke="#1E1916" stroke-width="2.2" stroke-linejoin="round"/>
+              <rect x="19" y="21" width="26" height="22" rx="11" fill="#C93B2B" stroke="#1E1916" stroke-width="2.2"/>
+              <path d="M28 23 C31 28 31 36 28 41 M36 23 C39 28 39 36 36 41" fill="none" stroke="#FFFDF9" stroke-width="2.2" stroke-linecap="round"/>
+            </g>
+          </svg>
+          <div><b>Sladký mix</b><small>jemné &amp; sladké</small></div>
+        </div>
+        <div class="mix-tag sour">
+          <svg viewBox="0 0 64 64" aria-hidden="true">
+            <rect x="6" y="6" width="52" height="52" rx="14" fill="#EDF5E1"/>
+            <path d="M16 40 C16 25 26 16 39 18 C50 20 53 31 46 41 C40 50 16 50 16 40 Z" fill="#6F9F34" stroke="#1E1916" stroke-width="2.2"/>
+            <path d="M24 29 C29 24 37 24 41 28" fill="none" stroke="#F1F9E2" stroke-width="2.4" stroke-linecap="round"/>
+            <circle cx="27" cy="39" r="1.6" fill="#FFFDF9"/>
+            <circle cx="37" cy="38" r="1.6" fill="#FFFDF9"/>
+            <circle cx="33" cy="32" r="1.5" fill="#FFFDF9"/>
+            <path d="M47 14 L49 18 L53 19 L49 21 L47 25 L45 21 L41 19 L45 18 Z" fill="#EAB826" stroke="#1E1916" stroke-width="1.3" stroke-linejoin="round"/>
+          </svg>
+          <div><b>Kyselý mix</b><small>šumivé &amp; kyselé</small></div>
+        </div>
+      </div>
+      <hr class="slip-sep">
+      <div class="floor-bar">
+        <div class="fb-txt"><strong>Vyber si patro doručení</strong>přízemí až třetí patro</div>
+        <div class="floor-dots" aria-label="Patra 0, 1, 2, 3">
+          <span class="floor-dot">0</span>
+          <span class="floor-dot">1</span>
+          <span class="floor-dot">2</span>
+          <span class="floor-dot">3</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="auth-actions">
+      <button class="btn btn-primary" id="btnGoRegister">Vytvořit účet</button>
+      <button class="btn btn-ghost" id="btnGoLogin">Přihlásit se</button>
+    </div>
+    <p class="auth-foot">Stačí si zvolit přezdívku a heslo — žádný e-mail netřeba.</p>
   </div>
-  <h1>Přestávka</h1>
-  <p class="tagline">Studentská cukrárna</p>
-  <p class="hero-sub">Sladkosti, co dorazí až do tvé třídy. Objednáš za pár vteřin, vyzvedneš o velké přestávce.</p>
-  <div class="auth-actions">
-    <button class="btn btn-primary" id="btnGoRegister">Vytvořit účet</button>
-    <button class="btn btn-ghost" id="btnGoLogin">Přihlásit se</button>
-  </div>
-  <p class="auth-foot">Přihlásíš se svým uživatelským jménem a heslem.</p>
 </div>
 
 <!-- přihlášená aplikace -->
 <div id="app" class="screen app">
   <header class="topbar">
     <div class="brand">
-      <svg viewBox="0 0 220 130" aria-hidden="true"><path fill="#D64550" d="M80 65 C62 52 40 42 30 46 C20 50 22 62 22 65 C22 68 20 80 30 84 C40 88 62 78 80 65 Z"/><path fill="#D64550" d="M140 65 C158 52 180 42 190 46 C200 50 198 62 198 65 C198 68 200 80 190 84 C180 88 158 78 140 65 Z"/><rect fill="#D64550" x="76" y="41" width="68" height="48" rx="24"/><path d="M104 47 q7 18 0 36 M116 45 q7 20 0 40" fill="none" stroke="#FAF7F2" stroke-width="4" stroke-linecap="round" opacity=".6"/></svg>
-      <b>Přestávka</b>
+      <div class="brand-mark">
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <g transform="rotate(-15 32 32)">
+            <path d="M20 32 L10 23 L13 32 L10 41 Z" fill="#C93B2B" stroke="#1E1916" stroke-width="2.8" stroke-linejoin="round"/>
+            <path d="M44 32 L54 23 L51 32 L54 41 Z" fill="#C93B2B" stroke="#1E1916" stroke-width="2.8" stroke-linejoin="round"/>
+            <rect x="18" y="20" width="28" height="24" rx="12" fill="#C93B2B" stroke="#1E1916" stroke-width="2.8"/>
+            <path d="M28 22 C31 28 31 36 28 42 M37 22 C40 28 40 36 37 42" fill="none" stroke="#FFFDF9" stroke-width="2.8" stroke-linecap="round"/>
+          </g>
+        </svg>
+      </div>
+      <div class="brand-txt">
+        <b>Přestávka</b>
+        <span id="userGreet">Studentská cukrárna</span>
+      </div>
     </div>
     <span id="roleBadge" class="badge" hidden></span>
     <span class="sp"></span>
-    <button class="iconbtn" id="btnSettings" aria-label="Nastavení"></button>
-    <button class="iconbtn" id="btnLogout" aria-label="Odhlásit se"></button>
+    <button class="iconbtn" id="btnSettings" aria-label="Nastavení" title="Nastavení"></button>
+    <button class="iconbtn" id="btnLogout" aria-label="Odhlásit se" title="Odhlásit se"></button>
   </header>
+
   <main>
     <section class="view" id="view-shop">
-      <div class="viewhead"><h2>Nabídka</h2><p id="shopSub">Dnešní menu — doručíme až do třídy.</p></div>
+      <div class="shop-banner">
+        <div class="sb-top">
+          <div>
+            <h3>Dnešní nabídka</h3>
+            <p>Můžeš si objednat <strong>Sladký mix</strong> i <strong>Kyselý mix</strong> a zvolit, na jaké patro ti to doneseme — <strong>0., 1., 2. nebo 3. patro</strong>.</p>
+          </div>
+        </div>
+        <div class="sb-pills">
+          <span class="sb-pill sweet">Sladký mix</span>
+          <span class="sb-pill sour">Kyselý mix</span>
+          <span class="sb-pill floors">Patro 0 · 1 · 2 · 3</span>
+        </div>
+      </div>
+
       <div id="productList"></div>
       <div id="addProductWrap"></div>
-      <div class="foot"><button class="secret" id="btnSecret" aria-label="Kód"><svg class="ic" viewBox="0 0 24 24"><path d="M12 4.5l7.5 7.5-7.5 7.5L4.5 12z"/></svg></button></div>
+      <div class="foot">
+        <button class="secret" id="btnSecret" aria-label="Kód">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M12 4.5l7.5 7.5-7.5 7.5L4.5 12z"/></svg>
+        </button>
+      </div>
     </section>
+
     <section class="view" id="view-my">
-      <div class="viewhead"><h2>Moje objednávky</h2><p>Tvoje dosavadní objednávky a jejich stav.</p></div>
+      <div class="viewhead">
+        <h2>Moje objednávky</h2>
+        <p>Přehled toho, co sis objednal, na jaké patro a jaký je stav.</p>
+      </div>
       <div id="myOrders"></div>
     </section>
+
     <section class="view" id="view-admin">
-      <div class="viewhead"><h2>Všechny objednávky</h2><p>Kdo si objednal, kam to donést a jak se platí.</p></div>
+      <div class="viewhead">
+        <h2>Všechny objednávky</h2>
+        <p>Kdo si objednal, na jaké patro to donést a jak platí.</p>
+      </div>
+      <div id="adminStats"></div>
+      <div id="adminFilters" class="filter-row"></div>
       <div id="allOrders"></div>
     </section>
+
     <section class="view" id="view-accounts">
-      <div class="viewhead"><h2>Účty</h2><p>Všechny vytvořené účty — včetně přihlašovacích hesel.</p></div>
+      <div class="viewhead">
+        <h2>Účty</h2>
+        <p>Všechny registrované účty včetně správy.</p>
+      </div>
       <div id="usersList"></div>
     </section>
   </main>
-  <nav class="tabbar" id="tabbar"></nav>
+
+  <div class="tabbar-wrap">
+    <nav class="tabbar" id="tabbar"></nav>
+  </div>
 </div>
 
 <!-- bottom sheet -->
@@ -283,11 +837,9 @@ main{padding:18px 16px 118px}
 <script>
 /* =====================================================================
    PŘESTÁVKA — studentská cukrárna
-   Jeden soubor: auth + objednávky + role + QR platba. Běží na GitHub
-   Pages, data ve Firestore.
+   Jeden soubor: auth + objednávky (patro 0–3) + role + QR platba.
    ===================================================================== */
 
-/* ---- SEM VLOŽ svou konfiguraci z Firebase (Project settings › Your apps) ---- */
 const firebaseConfig = {
   apiKey: "AIzaSyDAXQ8joVoxNVQHxUIe3knG7DhiPcpYLXQ",
   authDomain: "gumitci-web.firebaseapp.com",
@@ -296,35 +848,43 @@ const firebaseConfig = {
   messagingSenderId: "1011704668790",
   appId: "1:1011704668790:web:9880db923dcadcaa8df557"
 };
-const CONFIGURED = !String(firebaseConfig.apiKey).startsWith("YOUR");
+const CONFIGURED = Boolean(firebaseConfig.apiKey) && !String(firebaseConfig.apiKey).startsWith("YOUR");
 
-/* Přihlašování je přes uživatelské jméno › interně se doplní doména,
-   aby Firebase Auth fungoval jako e-mail. Heslo se v Auth ukládá s pevnou
-   příponou (Firebase vyžaduje min. 6 znaků, my povolujeme 3). */
+/* Přihlašování přes uživatelské jméno -> interně e-mail pro Firebase Auth */
 const USER_DOMAIN = "@prestavka.users";
 const PW_SALT = "__prstvk__";
 const emailOf = u => u.trim().toLowerCase().replace(/\s+/g, "") + USER_DOMAIN;
 
-/* Role tokeny — NEjsou uloženy přímo, ale číslicově transformované. */
+/* Role tokeny */
 const ROLE_TOKENS = { owner: "3718950", developer: "5294526" };
 function decodeRoleToken(t){
   const m = { "7":"0","4":"1","9":"2","1":"3","6":"4","0":"5","8":"6","3":"7","5":"8","2":"9" };
   return t.split("").reverse().map(c => m[c]).join("");
 }
 
-/* Místnosti gymnázia */
-const ROOMS = ["Prima","Sekunda","Tercie","Kvarta","Kvinta","Sexta","Septima","Oktáva",
-"1.A","2.A","3.A","4.A","Fyzika","Aula","Ateliér","Jazyková učebna 1","Jazyková učebna 2",
-"Jazyková učebna 3","Učebna výpočetní techniky 1","Učebna výpočetní techniky 2",
-"Biologie","Dvůr","Hlavní chodba","Studovna"];
+/* Patra školy */
+const FLOORS = [
+  { id: 0, label: "0. patro", sub: "přízemí" },
+  { id: 1, label: "1. patro", sub: "patro" },
+  { id: 2, label: "2. patro", sub: "patro" },
+  { id: 3, label: "3. patro", sub: "patro" }
+];
 
-const PALETTE = ["#D64550","#8CA94B","#C4823E","#7A6BB8"]; /* barvy bonbónů */
+/* Místnosti gymnázia */
+const ROOMS = [
+  "Prima","Sekunda","Tercie","Kvarta","Kvinta","Sexta","Septima","Oktáva",
+  "1.A","2.A","3.A","4.A","Fyzika","Aula","Ateliér","Jazyková učebna 1",
+  "Jazyková učebna 2","Jazyková učebna 3","Učebna výpočetní techniky 1",
+  "Učebna výpočetní techniky 2","Biologie","Dvůr","Hlavní chodba","Studovna"
+];
+
+const PALETTE = ["#C93B2B","#558724","#D4852A","#6E59A8"];
 
 /* ---------- helpers ---------- */
 const qs  = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const czk = n => new Intl.NumberFormat("cs-CZ",{style:"currency",currency:"CZK"}).format(n);
-const norm = s => String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+const czk = n => new Intl.NumberFormat("cs-CZ",{style:"currency",currency:"CZK"}).format(n || 0);
+const norm = s => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
 function fmtDate(ts){
   if(!ts || !ts.seconds) return "právě teď";
   const d = new Date(ts.seconds*1000);
@@ -338,11 +898,10 @@ const I = {
   user:'<svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c.6-3.6 3.4-5.7 7-5.7s6.4 2.1 7 5.7"/></svg>',
   gear:'<svg class="ic" viewBox="0 0 24 24"><path d="M4 7h8M16.5 7H20M4 12h3M11.5 12H20M4 17h11M19 17h1"/><circle cx="14" cy="7" r="2.2"/><circle cx="9" cy="12" r="2.2"/><circle cx="17" cy="17" r="2.2"/></svg>',
   logout:'<svg class="ic" viewBox="0 0 24 24"><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9"/></svg>',
-  search:'<svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.2-4.2"/></svg>',
   x:'<svg class="ic" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   trash:'<svg class="ic sm" viewBox="0 0 24 24"><path d="M4 7h16M9.5 7V4.5h5V7M7 7l1 13h8l1-13M10.5 11v5M13.5 11v5"/></svg>',
-  pencil:'<svg class="ic" viewBox="0 0 24 24"><path d="M4 20l1.2-4.5L16 4.7l3.3 3.3L8.5 18.8 4 20zM13.8 7l3.2 3.2"/></svg>',
-  check:'<svg class="ic" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>',
+  pencil:'<svg class="ic sm" viewBox="0 0 24 24"><path d="M4 20l1.2-4.5L16 4.7l3.3 3.3L8.5 18.8 4 20zM13.8 7l3.2 3.2"/></svg>',
+  check:'<svg class="ic sm" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>',
   cash:'<svg class="ic sm" viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6.3 9.5h.01M17.7 14.5h.01"/></svg>',
   qr:'<svg class="ic sm" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><path d="M13.5 13.5h3v3M17 20.5h3M20 17v3.5"/></svg>',
   bag:'<svg class="ic" viewBox="0 0 24 24"><path d="M6 8h12l-1.1 12H7.1L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>',
@@ -351,16 +910,53 @@ const I = {
   users:'<svg class="ic" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3"/><path d="M3 19.5c.5-3.2 3-5 6-5s5.5 1.8 6 5M15.5 6a3 3 0 0 1 0 5.6M17.5 15c2 .8 3.2 2.4 3.5 4.5"/></svg>',
   eye:'<svg class="ic sm" viewBox="0 0 24 24"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.4"/></svg>',
   plus:'<svg class="ic sm" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+  pin:'<svg class="ic sm" viewBox="0 0 24 24"><path d="M12 21s6-5.3 6-10.5a6 6 0 1 0-12 0C6 15.7 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.1"/></svg>'
 };
 
-function candySVG(color){
-  return '<svg viewBox="0 0 220 130" aria-hidden="true">'
-    + '<path fill="'+color+'" d="M80 65 C62 52 40 42 30 46 C20 50 22 62 22 65 C22 68 20 80 30 84 C40 88 62 78 80 65 Z"/>'
-    + '<path fill="'+color+'" d="M140 65 C158 52 180 42 190 46 C200 50 198 62 198 65 C198 68 200 80 190 84 C180 88 158 78 140 65 Z"/>'
-    + '<rect fill="'+color+'" x="76" y="41" width="68" height="48" rx="24"/>'
-    + '<path d="M104 47 q7 18 0 36 M116 45 q7 20 0 40" fill="none" stroke="#FAF7F2" stroke-width="4" stroke-linecap="round" opacity=".6"/></svg>';
+/* ---------- autorské ilustrace produktů ---------- */
+function productKind(p){
+  const s = norm((p && p.id ? p.id : "") + " " + (p && p.name ? p.name : ""));
+  if(s.includes("kysel")) return "sour";
+  if(s.includes("sladk")) return "sweet";
+  return "other";
 }
-const colorOf = id => PALETTE[[...id].reduce((a,c)=>a+c.charCodeAt(0),0) % PALETTE.length];
+const colorOf = id => PALETTE[[...String(id||"")].reduce((a,c)=>a+c.charCodeAt(0),0) % PALETTE.length];
+
+function productSVG(p){
+  const kind = productKind(p);
+  if(kind === "sweet"){
+    return '<svg viewBox="0 0 80 80" aria-hidden="true">'
+      + '<ellipse cx="40" cy="69" rx="25" ry="5" fill="rgba(30,25,22,.1)"/>'
+      + '<g transform="rotate(-14 38 40)">'
+      + '<path d="M22 40 L9 29 L13 40 L9 51 Z" fill="#C93B2B" stroke="#1E1916" stroke-width="2.4" stroke-linejoin="round"/>'
+      + '<path d="M56 40 L69 29 L65 40 L69 51 Z" fill="#C93B2B" stroke="#1E1916" stroke-width="2.4" stroke-linejoin="round"/>'
+      + '<rect x="21" y="25" width="36" height="30" rx="15" fill="#C93B2B" stroke="#1E1916" stroke-width="2.4"/>'
+      + '<path d="M33 27 C37 35 37 45 33 53 M44 27 C48 35 48 45 44 53" fill="none" stroke="#FFFDF9" stroke-width="2.8" stroke-linecap="round"/>'
+      + '</g>'
+      + '<circle cx="62" cy="20" r="6.5" fill="#F29E6E" stroke="#1E1916" stroke-width="2.1"/>'
+      + '<circle cx="60.5" cy="18.2" r="1.4" fill="#FFFDF9"/>'
+      + '</svg>';
+  }
+  if(kind === "sour"){
+    return '<svg viewBox="0 0 80 80" aria-hidden="true">'
+      + '<ellipse cx="40" cy="69" rx="24" ry="5" fill="rgba(30,25,22,.1)"/>'
+      + '<path d="M18 49 C15 31 29 19 46 21 C61 23 66 37 59 51 C52 63 21 62 18 49 Z" fill="#6F9F34" stroke="#1E1916" stroke-width="2.4"/>'
+      + '<path d="M28 34 C34 27 45 27 50 32" fill="none" stroke="#F1F9E2" stroke-width="3" stroke-linecap="round"/>'
+      + '<circle cx="30" cy="48" r="2" fill="#FFFDF9"/>'
+      + '<circle cx="46" cy="47" r="2" fill="#FFFDF9"/>'
+      + '<circle cx="39" cy="39" r="1.8" fill="#FFFDF9"/>'
+      + '<circle cx="52" cy="40" r="1.7" fill="#FFFDF9"/>'
+      + '<path d="M61 12 L63.2 17.5 L69 19.5 L63.2 21.5 L61 27 L58.8 21.5 L53 19.5 L58.8 17.5 Z" fill="#EAB826" stroke="#1E1916" stroke-width="1.8" stroke-linejoin="round"/>'
+      + '<circle cx="19" cy="24" r="5" fill="#EAB826" stroke="#1E1916" stroke-width="2"/>'
+      + '</svg>';
+  }
+  const col = colorOf(p && p.id);
+  return '<svg viewBox="0 0 80 80" aria-hidden="true">'
+    + '<ellipse cx="40" cy="68" rx="22" ry="4.5" fill="rgba(30,25,22,.1)"/>'
+    + '<circle cx="40" cy="39" r="22" fill="'+col+'" stroke="#1E1916" stroke-width="2.4"/>'
+    + '<path d="M28 29 C34 22 46 22 52 29 M24 41 C33 34 47 34 56 41 M28 52 C35 47 45 47 52 52" fill="none" stroke="#FFFDF9" stroke-width="2.6" stroke-linecap="round" opacity=".85"/>'
+    + '</svg>';
+}
 
 /* ---------- toast + sheet + confirm ---------- */
 function toast(msg, type){
@@ -375,7 +971,7 @@ const Sheet = {
   el: qs("#sheet"),
   open(html){
     const panel = this.el.querySelector(".panel");
-    panel.innerHTML = '<button class="sheet-x">'+I.x+'</button><div class="grab"></div>' + html;
+    panel.innerHTML = '<button class="sheet-x" aria-label="Zavřít">'+I.x+'</button><div class="grab"></div>' + html;
     panel.querySelector(".sheet-x").onclick = () => Sheet.close();
     this.el.classList.add("open");
     document.body.style.overflow = "hidden";
@@ -387,6 +983,7 @@ const Sheet = {
   }
 };
 qs("#sheet .scrim").onclick = () => Sheet.close();
+document.addEventListener("keydown", e => { if(e.key === "Escape" && Sheet.el.classList.contains("open")) Sheet.close(); });
 
 function askConfirm(title, text, yes){
   return new Promise(res => {
@@ -421,13 +1018,16 @@ function authErr(e){
   if(c.includes("email-already-in-use")) return "Toto jméno už je zabrané, zkus jiné.";
   if(c.includes("invalid-email")) return "Takhle jméno nejde použít (použij jen a–z, číslice, . _ -).";
   if(c.includes("too-many-requests")) return "Moc pokusů — zkus to za chvíli.";
-  if(c.includes("unauthorized")) return "Nemáš k tomu oprávnění.";
+  if(c.includes("unauthorized") || c.includes("permission-denied")) return "Nemáš k tomu oprávnění.";
   return "Něco se nepovedlo. Zkus to znovu.";
 }
 
 /* ---------- stav ---------- */
 let auth = null, db = null;
-const state = { me:null, products:[], myOrders:[], allOrders:[], users:[], iban:null, tab:"view-shop" };
+const state = {
+  me:null, products:[], myOrders:[], allOrders:[], users:[],
+  iban:null, tab:"view-shop", adminFilter:"all"
+};
 let unsubs = [];
 const isAdmin = () => ["owner","developer"].includes(state.me && state.me.role);
 const FV = () => firebase.firestore.FieldValue;
@@ -435,12 +1035,16 @@ const orderSummary = o => (o.items||[]).map(i => i.name + " ×" + i.qty).join(",
 
 /* ---------- přepínání obrazovek ---------- */
 function show(id){
-  ["setup","auth","app"].forEach(s => qs("#"+s).classList.toggle("on", s === id));
+  ["setup","auth","app"].forEach(s => {
+    const el = qs("#"+s);
+    if(el) el.classList.toggle("on", s === id);
+  });
   qs("#boot").classList.add("gone");
+  window.scrollTo(0, 0);
 }
 
 /* ---------- Firebase init ---------- */
-if(CONFIGURED){
+if(CONFIGURED && typeof firebase !== "undefined"){
   firebase.initializeApp(firebaseConfig);
   auth = firebase.auth();
   db = firebase.firestore();
@@ -460,12 +1064,18 @@ async function onAuth(user){
   try { snap = await db.collection("users").doc(user.uid).get(); } catch(e){}
   if(!snap || !snap.exists){
     try { await auth.signOut(); } catch(e){}
+    show("auth");
     toast("Účet nebyl nalezen (možná byl smazán).", "err");
     return;
   }
   const d = snap.data();
-  state.me = { uid:user.uid, email:user.email, username:d.username||"", nickname:d.nickname||d.username||"", role:d.role||"user" };
+  state.me = {
+    uid:user.uid, email:user.email,
+    username:d.username||"", nickname:d.nickname||d.username||"",
+    role:d.role||"user"
+  };
   state.tab = "view-shop";
+  Sheet.close();
   show("app");
   renderChrome();
   startListeners();
@@ -479,23 +1089,24 @@ function startListeners(){
   unsubs.push(db.collection("products").onSnapshot(s => {
     state.products = s.docs.map(x => ({ id:x.id, ...x.data() }));
     renderProducts();
-  }));
+  }, () => {}));
   unsubs.push(db.collection("orders").where("uid","==",state.me.uid).onSnapshot(s => {
     state.myOrders = s.docs.map(x => ({ id:x.id, ...x.data() }));
     renderMyOrders();
-  }));
+  }, () => {}));
+  /* IBAN posloucháme pro všechny uživatele, aby šlo zobrazit QR platbu */
+  unsubs.push(db.collection("config").doc("account").onSnapshot(s => {
+    state.iban = (s.exists && s.data().iban) || null;
+  }, () => {}));
   if(isAdmin()){
     unsubs.push(db.collection("orders").onSnapshot(s => {
       state.allOrders = s.docs.map(x => ({ id:x.id, ...x.data() }));
       renderAllOrders();
-    }));
+    }, () => {}));
     unsubs.push(db.collection("users").onSnapshot(s => {
       state.users = s.docs.map(x => ({ uid:x.id, ...x.data() }));
       renderUsers();
-    }));
-    unsubs.push(db.collection("config").doc("account").onSnapshot(s => {
-      state.iban = (s.exists && s.data().iban) || null;
-    }));
+    }, () => {}));
   }
 }
 
@@ -505,11 +1116,11 @@ async function seedProducts(){
     if(s.empty){
       await db.collection("products").doc("sladky-mix").set({
         name:"Sladký mix", price:17.90, stock:12,
-        desc:"Výběr jemných sladkostí — čokoláda, bonbóny, sušenky."
+        desc:"Výběr sladkých bonbónů a měkkých želé kousků na velkou přestávku."
       });
       await db.collection("products").doc("kysely-mix").set({
         name:"Kyselý mix", price:17.90, stock:12,
-        desc:"Kyselé dražé a šumíky, co udělají grimasu za tebou."
+        desc:"Kyselé dražé, želé a šumíky, co zaručeně udělají grimasu."
       });
     }
   }catch(e){}
@@ -517,6 +1128,7 @@ async function seedProducts(){
 
 /* ---------- horní lišta + taby ---------- */
 function renderChrome(){
+  qs("#userGreet").textContent = "Ahoj, " + (state.me.nickname || state.me.username);
   const badge = qs("#roleBadge");
   if(isAdmin()){
     badge.hidden = false;
@@ -552,43 +1164,63 @@ function showView(id){
 function renderProducts(){
   const wrap = qs("#productList");
   if(!state.products.length){
-    wrap.innerHTML = '<div class="empty">'+candySVG("#D64550").replace("<svg","<svg width=74 height=46")+'<br>Zatím nic v nabídce.</div>';
+    wrap.innerHTML = '<div class="empty">'+productSVG({id:"sladky-mix"})+'<br>Zatím nic v nabídce.</div>';
   } else {
-    wrap.innerHTML = state.products.map(p => {
-      const out = p.stock <= 0;
+    const sorted = [...state.products].sort((a,b) => {
+      const rank = p => productKind(p)==="sweet" ? 0 : (productKind(p)==="sour" ? 1 : 2);
+      return rank(a) - rank(b);
+    });
+    wrap.innerHTML = sorted.map(p => {
+      const kind = productKind(p);
+      const out = (p.stock || 0) <= 0;
       const low = !out && p.stock <= 3;
-      return '<article class="product">'
-        + '<div class="p-vis">'+candySVG(colorOf(p.id))+'</div>'
-        + '<div class="p-info"><h3>'+esc(p.name)+'</h3>'
-        + '<p class="p-desc">'+esc(p.desc||"")+'</p>'
-        + '<p class="p-stock '+(out?"out":(low?"low":""))+'">'+(out?"Vyprodáno":"Skladem: "+p.stock+" ks")+'</p></div>'
-        + '<div class="p-buy"><strong class="p-price">'+czk(p.price)+' <span>/ balíček</span></strong>'
-        + '<button class="btn btn-primary btn-order" data-act="order" data-id="'+p.id+'" '+(out?"disabled":"")+'>'+(out?"Není skladem":"Objednat")+'</button></div>'
-        + (isAdmin() ? '<button class="p-edit" data-act="edit" data-id="'+p.id+'" aria-label="Upravit">'+I.pencil+'</button>' : "")
+      const flavorLabel = kind === "sweet" ? "Sladká varianta" : (kind === "sour" ? "Kyselá varianta" : "Speciální nabídka");
+      return '<article class="product is-'+kind+(out?" is-out":"")+'">'
+        + '<div class="p-head">'
+        +   '<div class="p-vis">'+productSVG(p)+'</div>'
+        +   '<div class="p-info">'
+        +     '<div class="p-kicker-row"><span class="p-flavor">'+flavorLabel+'</span></div>'
+        +     '<h3>'+esc(p.name)+'</h3>'
+        +     '<p class="p-desc">'+esc(p.desc||"")+'</p>'
+        +     '<span class="p-stock '+(out?"out":(low?"low":""))+'">'+(out?"Vyprodáno":"Skladem "+p.stock+" ks")+'</span>'
+        +   '</div>'
+        + '</div>'
+        + '<div class="p-foot">'
+        +   '<strong class="p-price">'+czk(p.price)+' <span>/ balíček</span></strong>'
+        +   '<div class="p-foot-acts">'
+        +     (isAdmin() ? '<button class="p-edit" data-act="edit" data-id="'+esc(p.id)+'" aria-label="Upravit" title="Upravit">'+I.pencil+'</button>' : "")
+        +     '<button class="btn btn-primary btn-order" data-act="order" data-id="'+esc(p.id)+'" '+(out?"disabled":"")+'>'+(out?"Vyprodáno":"Objednat")+'</button>'
+        +   '</div>'
+        + '</div>'
         + '</article>';
     }).join("");
   }
   qs("#addProductWrap").innerHTML = isAdmin()
-    ? '<button class="btn btn-line btn-sm" data-act="add-product">'+I.plus+' Přidat produkt</button>' : "";
+    ? '<button class="btn btn-line btn-sm" style="width:100%" data-act="add-product">'+I.plus+' Přidat další produkt</button>' : "";
 }
 
 /* ---------- render: objednávky ---------- */
 function payPills(o){
   if(o.payment === "cash")
     return '<span class="pill cash">'+I.cash+'Hotově na místě</span>'
-      + (o.paid ? '<span class="pill ok">'+I.check+'Předáno</span>' : '<span class="pill warn">'+I.qr+'Čeká na vyzvednutí</span>');
+      + (o.paid ? '<span class="pill ok">'+I.check+'Předáno</span>' : '<span class="pill warn">Čeká na vyzvednutí</span>');
   return o.paid
-    ? '<span class="pill ok">'+I.qr+'On-line — zaplaceno</span>'
-    : '<span class="pill warn">'+I.qr+'On-line — nezaplaceno</span>';
+    ? '<span class="pill ok">'+I.qr+'On-line · zaplaceno</span>'
+    : '<span class="pill warn">'+I.qr+'On-line · nezaplaceno</span>';
 }
 function orderCard(o, admin){
+  const loc = o.room || "?";
   return '<div class="o-card">'
     + '<div class="o-row"><strong>'+esc(orderSummary(o))+'</strong><span class="o-total">'+czk(o.total)+'</span></div>'
-    + '<div class="o-meta">'+esc(o.room||"?")+' · '+fmtDate(o.createdAt)+' · '+esc(o.name||"")+(admin && o.username ? ' <i style="opacity:.7">@'+esc(o.username)+'</i>' : '')+'</div>'
+    + '<div class="o-meta">'
+    +   '<span class="o-loc">'+I.pin+esc(loc)+'</span>'
+    +   '<span>'+fmtDate(o.createdAt)+'</span>'
+    +   '<span>· '+esc(o.name||"")+(admin && o.username ? ' <i style="opacity:.7">@'+esc(o.username)+'</i>' : '')+'</span>'
+    + '</div>'
     + (o.note ? '<div class="o-note"><b>Poznámka</b>'+esc(o.note)+'</div>' : '')
     + '<div class="o-pills">'+payPills(o)+'</div>'
     + '<div class="o-acts">'
-    + (admin && !o.paid ? '<button class="mini-btn" data-act="mark-paid" data-oid="'+o.id+'">'+I.check+' Označit jako zaplacené</button>' : '')
+    + (admin && !o.paid ? '<button class="mini-btn ok" data-act="mark-paid" data-oid="'+o.id+'">'+I.check+' Označit jako hotové</button>' : '')
     + (!admin && o.payment==="online" && !o.paid ? '<button class="mini-btn" data-act="pay" data-oid="'+o.id+'">'+I.qr+' Zaplatit teď</button>' : '')
     + '<button class="mini-btn danger" data-act="del-order" data-oid="'+o.id+'">'+I.trash+(admin?"Smazat":"Zrušit")+'</button>'
     + '</div></div>';
@@ -599,83 +1231,116 @@ function renderMyOrders(){
   const el = qs("#myOrders");
   const list = [...state.myOrders].sort(byNew);
   el.innerHTML = list.length ? list.map(o => orderCard(o,false)).join("")
-    : '<div class="empty">'+candySVG("#8CA94B").replace("<svg","<svg width=74 height=46")+'<br>Zatím jsi nic neobjednal.</div>';
+    : '<div class="empty">'+productSVG({id:"kysely-mix"})+'<br>Zatím sis nic neobjednal.<br><span style="font-size:13px;color:var(--ink3)">Vyber si Sladký nebo Kyselý mix v nabídce.</span></div>';
 }
+
 function renderAllOrders(){
   if(!isAdmin()) return;
-  const el = qs("#allOrders");
   const list = [...state.allOrders].sort(byNew);
-  qs("#view-admin .viewhead p").textContent = list.length
-    ? "Celkem " + list.length + " " + (list.length===1?"objednávka":(list.length<5?"objednávky":"objednávek")) + "."
-    : "Zatím nic.";
-  el.innerHTML = list.length ? list.map(o => orderCard(o,true)).join("") : "";
+  const pending = list.filter(o => !o.paid);
+  const sum = list.reduce((a,o) => a + (Number(o.total)||0), 0);
+
+  qs("#adminStats").innerHTML = '<div class="stats-row">'
+    + '<div class="stat-box"><small>Celkem</small><b>'+list.length+'</b></div>'
+    + '<div class="stat-box"><small>Čeká</small><b>'+pending.length+'</b></div>'
+    + '<div class="stat-box"><small>Součet</small><b>'+czk(sum)+'</b></div>'
+    + '</div>';
+
+  const filters = [
+    { id:"all", label:"Vše ("+list.length+")" },
+    { id:"pending", label:"Čekající ("+pending.length+")" },
+    { id:"done", label:"Hotové ("+(list.length - pending.length)+")" }
+  ];
+  qs("#adminFilters").innerHTML = filters.map(f =>
+    '<button class="f-chip '+(state.adminFilter===f.id?"on":"")+'" data-af="'+f.id+'">'+f.label+'</button>'
+  ).join("");
+
+  const filtered = state.adminFilter === "pending" ? pending
+    : (state.adminFilter === "done" ? list.filter(o => o.paid) : list);
+
+  qs("#allOrders").innerHTML = filtered.length
+    ? filtered.map(o => orderCard(o,true)).join("")
+    : '<div class="empty">Žádné objednávky v tomto přehledu.</div>';
 }
+
 function renderUsers(){
   if(state.me.role !== "developer") return;
   const el = qs("#usersList");
   const list = [...state.users].sort(byNew);
   el.innerHTML = list.length ? list.map(u => {
     const role = u.role === "developer" ? "Developer" : (u.role === "owner" ? "Majitel" : "Uživatel");
+    const cls = u.role === "developer" ? "dev" : (u.role === "owner" ? "owner" : "user");
     return '<div class="o-card">'
-      + '<div class="o-row"><strong>'+esc(u.username)+'</strong><span class="badge '+(u.role==="developer"?"dev":(u.role==="owner"?"owner":""))+'" style="background:'+(u.role==="user"?"var(--paper)":"")+';color:'+(u.role==="user"?"var(--ink2)":"")+'">'+role+'</span></div>'
-      + '<div class="o-meta">přezdívka: '+esc(u.nickname||"—")+' · od '+fmtDate(u.createdAt)+'</div>'
+      + '<div class="o-row"><strong>'+esc(u.username)+'</strong><span class="badge '+cls+'">'+role+'</span></div>'
+      + '<div class="o-meta"><span>přezdívka: '+esc(u.nickname||"—")+'</span><span>· od '+fmtDate(u.createdAt)+'</span></div>'
       + '<div class="u-pass">heslo: <code class="u-pass-val" data-pass="'+esc(u.password||"")+'">••••••</code>'
       + '<button class="mini-btn" data-act="eye">'+I.eye+' Zobrazit</button></div>'
       + '<div class="o-acts">'
-      + '<button class="mini-btn danger" data-act="del-user-orders" data-uid="'+u.uid+'">'+I.trash+' Smazat jeho objednávky</button>'
+      + '<button class="mini-btn danger" data-act="del-user-orders" data-uid="'+u.uid+'">'+I.trash+' Smazat objednávky</button>'
       + '<button class="mini-btn danger" data-act="del-user" data-uid="'+u.uid+'">'+I.trash+' Smazat účet</button>'
       + '</div></div>';
-  }).join("") : "";
+  }).join("") : '<div class="empty">Zatím žádné účty.</div>';
 }
 
 /* ---------- registrace / přihlášení ---------- */
 function openRegister(){
   const p = Sheet.open('<h3>Vytvořit účet</h3>'
-    + '<div class="field"><label>Uživatelské jméno</label><input id="regUser" class="input" placeholder="např. vojta99" autocomplete="off" maxlength="20"></div>'
-    + '<div class="field"><label>Heslo</label><input id="regPass" class="input" type="password" placeholder="alespoň 3 znaky"></div>'
-    + '<div class="field"><label>Heslo znovu</label><input id="regPass2" class="input" type="password"></div>'
+    + '<p class="sheet-sub">Během chvilky si můžeš objednat Sladký nebo Kyselý mix.</p>'
+    + '<div class="field"><label>Uživatelské jméno</label><input id="regUser" class="input" placeholder="např. vojta99" autocomplete="username" maxlength="20"></div>'
+    + '<div class="field"><label>Heslo</label><input id="regPass" class="input" type="password" autocomplete="new-password" placeholder="alespoň 3 znaky"></div>'
+    + '<div class="field"><label>Heslo znovu</label><input id="regPass2" class="input" type="password" autocomplete="new-password"></div>'
     + '<p class="err" id="regErr" hidden></p>'
     + '<button class="btn btn-primary" id="regGo" style="width:100%;margin-top:6px">Vytvořit účet</button>');
   const err = m => { const e = p.querySelector("#regErr"); e.hidden = !m; e.textContent = m||""; };
-  p.querySelector("#regGo").onclick = async () => {
+  const submit = async () => {
     const u = p.querySelector("#regUser").value.trim().toLowerCase();
     const pw = p.querySelector("#regPass").value;
     const pw2 = p.querySelector("#regPass2").value;
     const ve = validateUsername(u); if(ve) return err(ve);
     const pe = validatePassword(pw); if(pe) return err(pe);
     if(pw !== pw2) return err("Hesla se neshodují.");
+    const btn = p.querySelector("#regGo");
+    btn.disabled = true; btn.textContent = "Vytvářím účet…";
     try{
       const cred = await auth.createUserWithEmailAndPassword(emailOf(u), pw + PW_SALT);
       await db.collection("users").doc(cred.user.uid).set({
         username:u, password:pw, nickname:u, role:"user", createdAt:FV().serverTimestamp()
       });
-      Sheet.close(); toast("Vítej! Účet je vytvořený.");
-    }catch(e){ err(authErr(e)); }
+      Sheet.close(); toast("Vítej! Účet je připravený.");
+    }catch(e){ btn.disabled = false; btn.textContent = "Vytvořit účet"; err(authErr(e)); }
   };
+  p.querySelector("#regGo").onclick = submit;
+  p.querySelector("#regPass2").addEventListener("keydown", ev => { if(ev.key === "Enter") submit(); });
 }
+
 function openLogin(){
   const p = Sheet.open('<h3>Přihlásit se</h3>'
-    + '<div class="field"><label>Uživatelské jméno</label><input id="logUser" class="input" autocomplete="off"></div>'
-    + '<div class="field"><label>Heslo</label><input id="logPass" class="input" type="password"></div>'
+    + '<p class="sheet-sub">Zadej své uživatelské jméno a heslo.</p>'
+    + '<div class="field"><label>Uživatelské jméno</label><input id="logUser" class="input" autocomplete="username"></div>'
+    + '<div class="field"><label>Heslo</label><input id="logPass" class="input" type="password" autocomplete="current-password"></div>'
     + '<p class="err" id="logErr" hidden></p>'
     + '<button class="btn btn-primary" id="logGo" style="width:100%;margin-top:6px">Přihlásit se</button>');
   const err = m => { const e = p.querySelector("#logErr"); e.hidden = !m; e.textContent = m||""; };
-  p.querySelector("#logGo").onclick = async () => {
+  const submit = async () => {
     const u = p.querySelector("#logUser").value.trim().toLowerCase();
     const pw = p.querySelector("#logPass").value;
     if(!u || !pw) return err("Zadej jméno i heslo.");
+    const btn = p.querySelector("#logGo");
+    btn.disabled = true; btn.textContent = "Přihlašuji…";
     try{
       await auth.signInWithEmailAndPassword(emailOf(u), pw + PW_SALT);
       Sheet.close();
-    }catch(e){ err(authErr(e)); }
+    }catch(e){ btn.disabled = false; btn.textContent = "Přihlásit se"; err(authErr(e)); }
   };
+  p.querySelector("#logGo").onclick = submit;
+  p.querySelector("#logPass").addEventListener("keydown", ev => { if(ev.key === "Enter") submit(); });
 }
 
 /* ---------- tajné tlačítko + role ---------- */
 function openSecret(){
   const p = Sheet.open('<h3>Zadej kód</h3>'
     + '<p class="sheet-sub">Znáš ten správný kód?</p>'
-    + '<div class="field"><input id="codeIn" class="input" inputmode="numeric" placeholder="•••••••" autocomplete="off" style="letter-spacing:.3em;text-align:center;font-size:20px"></div>'
+    + '<div class="field"><input id="codeIn" class="input" inputmode="numeric" placeholder="•••••••" autocomplete="off" style="letter-spacing:.3em;text-align:center;font-size:20px;font-family:var(--fm)"></div>'
     + '<p class="err" id="codeErr" hidden></p>'
     + '<button class="btn btn-primary" id="codeGo" style="width:100%;margin-top:6px">Ověřit</button>');
   const err = m => { const e = p.querySelector("#codeErr"); e.hidden = !m; e.textContent = m||""; };
@@ -702,57 +1367,96 @@ function openSecret(){
 
 /* ---------- objednávka ---------- */
 function openOrder(prod){
-  let qty = 1, room = null, pay = "cash";
+  let qty = 1, floor = null, room = null, pay = "cash";
   const maxQty = Math.min(prod.stock || 1, 8);
   const p = Sheet.open(
-    '<div class="ord-top"><div class="ttl">'+candySVG(colorOf(prod.id))
-    + '<span><b>'+esc(prod.name)+'</b><small>'+czk(prod.price)+' za balíček</small></span></div>'
-    + '<div class="stepper"><button data-st="-1">-</button><b id="qtyN">1</b><button data-st="1">+</button></div></div>'
-    + '<div class="field"><label>Jméno (kdo vyzvedává)</label><input id="ordName" class="input" value="'+esc(state.me.nickname||state.me.username)+'" maxlength="24"></div>'
-    + '<div class="field"><label>Kam to donést?</label>'
-    + '<input id="ordRoom" class="input" placeholder="Napiš hledanou třídu…" autocomplete="off">'
-    + '<div class="chiprow" id="roomChips"></div></div>'
-    + '<div class="field"><label>Poznámka pro majitele (nepovinné)</label><textarea id="ordNote" rows="2" maxlength="140" placeholder="např. počkat do konce hodiny…"></textarea></div>'
-    + '<label style="font-size:12.5px;font-weight:700;letter-spacing:.02em;color:var(--ink2);display:block;margin-bottom:7px">PLATBA</label>'
-    + '<button class="pay-opt sel" data-pay="cash">'+I.cash+'<span><b>Hotově na místě</b><small>Zaplatíš při vyzvednutí</small></span><span class="dot"></span></button>'
-    + '<button class="pay-opt" data-pay="online">'+I.qr+'<span><b>Zaplatit předem on-line</b><small>QR kód z bankovní aplikace</small></span><span class="dot"></span></button>'
-    + '<button class="btn btn-primary" id="ordGo" style="width:100%;margin-top:12px">Objednat</button>');
+    '<div class="ord-top">'
+    +   '<div class="ttl">'+productSVG(prod)
+    +     '<span><b>'+esc(prod.name)+'</b><small>'+czk(prod.price)+' / balíček</small></span>'
+    +   '</div>'
+    +   '<div class="stepper"><button data-st="-1" disabled>−</button><b id="qtyN">1</b><button data-st="1" '+(maxQty<=1?"disabled":"")+'>+</button></div>'
+    + '</div>'
+
+    + '<div class="field">'
+    +   '<label>Na jaké patro? <span>(povinné)</span></label>'
+    +   '<div class="floor-grid" id="floorGrid">'
+    +     FLOORS.map(f => '<button type="button" class="floor-btn" data-floor="'+f.id+'"><b>'+f.id+'</b><span>'+f.sub+'</span></button>').join("")
+    +   '</div>'
+    + '</div>'
+
+    + '<div class="field">'
+    +   '<label>Třída nebo místo <span>(nepovinné, upřesní doručení)</span></label>'
+    +   '<input id="ordRoom" class="input" placeholder="např. Prima, 2.A, Fyzika, Hlavní chodba…" autocomplete="off" maxlength="36">'
+    +   '<div class="chiprow" id="roomChips"></div>'
+    + '</div>'
+
+    + '<div class="field">'
+    +   '<label>Jméno <span>(kdo vyzvedává)</span></label>'
+    +   '<input id="ordName" class="input" value="'+esc(state.me.nickname||state.me.username)+'" maxlength="24">'
+    + '</div>'
+
+    + '<div class="field">'
+    +   '<label>Poznámka <span>(nepovinné)</span></label>'
+    +   '<textarea id="ordNote" rows="2" maxlength="140" placeholder="např. počkat u dveří, až zazvoní…"></textarea>'
+    + '</div>'
+
+    + '<div class="field">'
+    +   '<label>Platba</label>'
+    +   '<button type="button" class="pay-opt sel" data-pay="cash">'+I.cash+'<span><b>Hotově na místě</b><small>Zaplatíš při předání</small></span><span class="dot"></span></button>'
+    +   '<button type="button" class="pay-opt" data-pay="online">'+I.qr+'<span><b>Zaplatit předem on-line</b><small>QR kód do bankovní aplikace</small></span><span class="dot"></span></button>'
+    + '</div>'
+
+    + '<button class="btn btn-primary" id="ordGo" style="width:100%;margin-top:4px">Objednat</button>'
+  );
 
   const updTotal = () => p.querySelector("#ordGo").textContent = "Objednat · " + czk(prod.price * qty);
   p.querySelectorAll("[data-st]").forEach(b => b.onclick = () => {
     qty = Math.max(1, Math.min(maxQty, qty + Number(b.dataset.st)));
     p.querySelector("#qtyN").textContent = qty;
-    p.querySelectorAll("[data-st]").forEach(x => x.disabled = false);
     p.querySelector('[data-st="1"]').disabled = qty >= maxQty;
     p.querySelector('[data-st="-1"]').disabled = qty <= 1;
     updTotal();
   });
   updTotal();
+
+  /* výběr patra 0, 1, 2, 3 */
+  p.querySelectorAll("[data-floor]").forEach(b => b.onclick = () => {
+    floor = Number(b.dataset.floor);
+    p.querySelectorAll("[data-floor]").forEach(x => x.classList.toggle("sel", x === b));
+  });
+
   p.querySelectorAll(".pay-opt").forEach(b => b.onclick = () => {
     pay = b.dataset.pay;
     p.querySelectorAll(".pay-opt").forEach(x => x.classList.toggle("sel", x === b));
   });
 
   const roomIn = p.querySelector("#ordRoom"), chips = p.querySelector("#roomChips");
+  const quickRooms = ["Prima","Sekunda","Tercie","Kvarta","1.A","2.A","3.A","4.A"];
   const renderChips = () => {
     if(room){
-      chips.innerHTML = '<button class="chip sel" data-room="'+esc(room)+'">'+esc(room)+I.x+' Zrušit výběr</button>'.replace(I.x,'<svg class="ic sm" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M6 6l12 12M18 6L6 18"/></svg>');
-      chips.querySelector(".chip").onclick = () => { room = null; roomIn.value = ""; renderChips(); };
+      chips.innerHTML = '<button type="button" class="chip sel" data-clear="1">'+esc(room)+' <svg class="ic sm" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
+      chips.querySelector("[data-clear]").onclick = () => { room = null; roomIn.value = ""; renderChips(); };
       return;
     }
-    const q = norm(roomIn.value);
-    const matches = ROOMS.filter(r => q && norm(r).includes(q)).slice(0, 8);
-    chips.innerHTML = matches.map(r => '<button class="chip" data-room="'+esc(r)+'">'+esc(r)+'</button>').join("");
+    const q = norm(roomIn.value.trim());
+    const matches = q
+      ? ROOMS.filter(r => norm(r).includes(q)).slice(0, 8)
+      : quickRooms;
+    chips.innerHTML = matches.map(r => '<button type="button" class="chip" data-room="'+esc(r)+'">'+esc(r)+'</button>').join("");
     chips.querySelectorAll("[data-room]").forEach(b => b.onclick = () => {
       room = b.dataset.room; roomIn.value = room; renderChips();
     });
   };
   roomIn.addEventListener("input", () => { room = null; renderChips(); });
+  renderChips();
 
   p.querySelector("#ordGo").onclick = async () => {
     const name = p.querySelector("#ordName").value.trim();
+    if(floor === null) return toast("Vyber patro (0, 1, 2 nebo 3).", "err");
     if(!name) return toast("Zadej jméno, na které se vyzvedává.", "err");
-    if(!room) return toast("Vyber třídu nebo místo doručení.", "err");
+    const roomTxt = (room || roomIn.value.trim());
+    const floorLabel = floor === 0 ? "0. patro (přízemí)" : floor + ". patro";
+    const fullRoom = roomTxt ? floorLabel + " · " + roomTxt : floorLabel;
     const note = p.querySelector("#ordNote").value.trim();
     const btn = p.querySelector("#ordGo");
     btn.disabled = true; btn.textContent = "Odesílám…";
@@ -760,7 +1464,7 @@ function openOrder(prod){
       const total = +(prod.price * qty).toFixed(2);
       const orderData = {
         uid: state.me.uid, username: state.me.username,
-        name, room, note, payment: pay, paid: false,
+        name, room: fullRoom, note, payment: pay, paid: false,
         items: [{ productId: prod.id, name: prod.name, qty, price: prod.price }],
         total, vs: String(Math.floor(100000 + Math.random()*899999)),
         createdAt: FV().serverTimestamp()
@@ -771,9 +1475,9 @@ function openOrder(prod){
       if(pay === "online"){ openPayQR({ id:ref.id, ...orderData }); }
       else {
         Sheet.close();
-        toast("Objednáno! Vyzvedni si to ve " + room + ".");
+        toast("Objednáno! Doručíme na " + fullRoom + ".");
       }
-    }catch(e){ btn.disabled = false; btn.textContent = "Objednat"; toast(authErr(e), "err"); }
+    }catch(e){ btn.disabled = false; updTotal(); toast(authErr(e), "err"); }
   };
 }
 
@@ -781,10 +1485,10 @@ function openOrder(prod){
 function openPayQR(o){
   const total = o.total;
   const p = Sheet.open('<h3>Zaplatit on-line</h3>'
-    + '<p class="sheet-sub">'+esc(orderSummary(o))+' · donést do '+esc(o.room||"?")+'</p>'
+    + '<p class="sheet-sub">'+esc(orderSummary(o))+' · '+esc(o.room||"?")+'</p>'
     + (state.iban
       ? '<div class="qr-wrap" id="qrBox"></div><div class="qr-amount">'+czk(total)+'</div>'
-        + '<p class="qr-note">Naskenuj QR ve své bankovní aplikaci.<br>Kód platí částku i variabilní symbol.</p>'
+        + '<p class="qr-note">Naskenuj QR ve své bankovní aplikaci.<br>Kód vyplní částku i variabilní symbol.</p>'
       : '<div class="o-note"><b>Poznámka</b>Majitel si ještě nenastavil číslo účtu (udělá to v Nastavení), takže QR teď vygenerovat nelze. Objednávka je ale uložená.</div>')
     + '<div class="sheet-actions"><button class="btn btn-line" id="payLater">Zaplatím později</button>'
     + (state.iban ? '<button class="btn btn-primary" id="payDone">'+I.check+' Zaplatil jsem</button>' : '') + '</div>');
@@ -809,22 +1513,23 @@ function openPayQR(o){
 function openSettings(){
   const me = state.me;
   const p = Sheet.open('<h3>Nastavení</h3>'
-    + '<div class="field"><label>Přezdívka (zobrazuje se u objednávek)</label>'
+    + '<p class="sheet-sub">Přihlášen jako <b>@'+esc(me.username)+'</b></p>'
+    + '<div class="field"><label>Přezdívka <span>(zobrazuje se u objednávek)</span></label>'
     + '<input id="setNick" class="input" value="'+esc(me.nickname)+'" maxlength="24"></div>'
     + '<button class="btn btn-line btn-sm" id="nickGo">Uložit přezdívku</button>'
     + '<hr class="hr"><h3 class="small">Změna hesla</h3>'
-    + '<div class="field"><label>Aktuální heslo</label><input id="pwOld" class="input" type="password"></div>'
+    + '<div class="field" style="margin-top:10px"><label>Aktuální heslo</label><input id="pwOld" class="input" type="password"></div>'
     + '<div class="field"><label>Nové heslo</label><input id="pwNew" class="input" type="password"></div>'
     + '<div class="field"><label>Nové heslo znovu</label><input id="pwNew2" class="input" type="password"></div>'
     + '<p class="err" id="setErr" hidden></p>'
     + '<button class="btn btn-line btn-sm" id="pwGo">Změnit heslo</button>'
     + (isAdmin()
       ? '<hr class="hr"><h3 class="small">Platební účet (pro QR platby)</h3>'
-        + '<div class="field"><label>IBAN, na který chodí on-line platby</label>'
-        + '<input id="setIban" class="input" value="'+esc(state.iban||"")+'" placeholder="CZ…" style="text-transform:uppercase"></div>'
+        + '<div class="field" style="margin-top:10px"><label>IBAN, na který chodí on-line platby</label>'
+        + '<input id="setIban" class="input" value="'+esc(state.iban||"")+'" placeholder="CZ…" style="text-transform:uppercase;font-family:var(--fm)"></div>'
         + '<button class="btn btn-line btn-sm" id="ibanGo">Uložit účet</button>'
       : '')
-    + '<hr class="hr"><p style="font-size:12.5px;color:var(--ink2)">Přestávka · studentská cukrárna · v1.0</p>');
+    + '<hr class="hr"><p style="font-size:12px;font-family:var(--fm);color:var(--ink3)">Přestávka · studentská cukrárna · v2.0</p>');
   const err = m => { const e = p.querySelector("#setErr"); e.hidden = !m; e.textContent = m||""; };
 
   p.querySelector("#nickGo").onclick = async () => {
@@ -832,7 +1537,9 @@ function openSettings(){
     if(!nick) return err("Přezdívka nemůže být prázdná.");
     try{
       await db.collection("users").doc(me.uid).update({ nickname:nick });
-      me.nickname = nick; Sheet.close(); toast("Přezdívka uložena.");
+      me.nickname = nick;
+      renderChrome();
+      Sheet.close(); toast("Přezdívka uložena.");
     }catch(e){ err(authErr(e)); }
   };
   p.querySelector("#pwGo").onclick = async () => {
@@ -850,10 +1557,10 @@ function openSettings(){
   if(isAdmin()){
     p.querySelector("#ibanGo").onclick = async () => {
       const iban = p.querySelector("#setIban").value.replace(/\s+/g,"").toUpperCase();
-      if(!/^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(iban)) return err("To nevypadá jako platné IBAN.");
+      if(!/^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(iban)) return err("To nevypadá jako platný IBAN.");
       try{
         await db.collection("config").doc("account").set({ iban }, { merge:true });
-        state.iban = iban; Sheet.close(); toast("Účet uložen — QR platby budou fungovat.");
+        state.iban = iban; Sheet.close(); toast("Účet uložen — QR platby jsou připravené.");
       }catch(e){ err(authErr(e)); }
     };
   }
@@ -862,13 +1569,13 @@ function openSettings(){
 /* ---------- admin: editace produktu ---------- */
 function openEditProduct(prod){
   const p = Sheet.open('<h3>Upravit produkt</h3>'
-    + '<div class="field"><label>Název</label><input id="prName" class="input" value="'+esc(prod.name)+'" maxlength="26"></div>'
+    + '<div class="field" style="margin-top:12px"><label>Název</label><input id="prName" class="input" value="'+esc(prod.name)+'" maxlength="26"></div>'
     + '<div class="field"><label>Popis</label><textarea id="prDesc" rows="2" maxlength="120">'+esc(prod.desc||"")+'</textarea></div>'
     + '<div class="field"><label>Cena (Kč)</label><input id="prPrice" class="input" type="number" step="0.10" min="0" value="'+prod.price+'"></div>'
     + '<div class="field"><label>Počet kusů na skladě</label><input id="prStock" class="input" type="number" step="1" min="0" value="'+(prod.stock||0)+'"></div>'
     + '<p class="err" id="prErr" hidden></p>'
     + '<div class="sheet-actions"><button class="btn btn-primary" id="prSave">Uložit</button>'
-    + '<button class="btn btn-line danger" id="prDel" style="color:var(--rasp);border-color:var(--rasp-soft)">'+I.trash+' Smazat</button></div>');
+    + '<button class="btn btn-line" id="prDel" style="color:var(--berry);border-color:#F0C7C1">'+I.trash+' Smazat</button></div>');
   const err = m => { const e = p.querySelector("#prErr"); e.hidden = !m; e.textContent = m||""; };
   p.querySelector("#prSave").onclick = async () => {
     const price = parseFloat(p.querySelector("#prPrice").value);
@@ -886,7 +1593,7 @@ function openEditProduct(prod){
   };
   p.querySelector("#prDel").onclick = async () => {
     Sheet.close();
-    if(await askConfirm("Smazat produkt?", esc(prod.name)+" zmizí z nabídky. Objednávky zůstanou.", "Smazat")){
+    if(await askConfirm("Smazat produkt?", prod.name+" zmizí z nabídky. Starší objednávky zůstanou.", "Smazat")){
       try{ await db.collection("products").doc(prod.id).delete(); toast("Produkt smazán."); }
       catch(e){ toast(authErr(e), "err"); }
     }
@@ -894,7 +1601,7 @@ function openEditProduct(prod){
 }
 function openAddProduct(){
   const p = Sheet.open('<h3>Nový produkt</h3>'
-    + '<div class="field"><label>Název</label><input id="prName" class="input" placeholder="např. Kávová zmrzlina" maxlength="26"></div>'
+    + '<div class="field" style="margin-top:12px"><label>Název</label><input id="prName" class="input" placeholder="např. Sladký mix" maxlength="26"></div>'
     + '<div class="field"><label>Popis</label><textarea id="prDesc" rows="2" maxlength="120"></textarea></div>'
     + '<div class="field"><label>Cena (Kč)</label><input id="prPrice" class="input" type="number" step="0.10" min="0" value="17.90"></div>'
     + '<div class="field"><label>Počet kusů na skladě</label><input id="prStock" class="input" type="number" step="1" min="0" value="10"></div>'
@@ -921,6 +1628,10 @@ function openAddProduct(){
 qs("#tabbar").addEventListener("click", e => {
   const t = e.target.closest(".tab"); if(t) showView(t.dataset.tab);
 });
+qs("#adminFilters").addEventListener("click", e => {
+  const f = e.target.closest("[data-af]");
+  if(f){ state.adminFilter = f.dataset.af; renderAllOrders(); }
+});
 qs("#productList").addEventListener("click", e => {
   const b = e.target.closest("[data-act]"); if(!b) return;
   const prod = state.products.find(x => x.id === b.dataset.id);
@@ -930,19 +1641,20 @@ qs("#productList").addEventListener("click", e => {
 qs("#addProductWrap").addEventListener("click", e => {
   if(e.target.closest('[data-act="add-product"]')) openAddProduct();
 });
+
 async function handleOrderBtns(container){
   container.addEventListener("click", async e => {
     const b = e.target.closest("[data-act]"); if(!b) return;
     const oid = b.dataset.oid, uid = b.dataset.uid;
     if(b.dataset.act === "mark-paid"){
-      try{ await db.collection("orders").doc(oid).update({ paid:true }); toast("Označeno jako zaplacené."); }catch(x){ toast(authErr(x),"err"); }
+      try{ await db.collection("orders").doc(oid).update({ paid:true }); toast("Označeno jako hotové."); }catch(x){ toast(authErr(x),"err"); }
     }
     if(b.dataset.act === "pay"){
       const o = state.myOrders.find(x => x.id === oid) || state.allOrders.find(x => x.id === oid);
       if(o) openPayQR(o);
     }
     if(b.dataset.act === "del-order"){
-      if(await askConfirm("Smazat objednávku?", "Opravdu tuto objednávku odstranit? Jde to vrátit jen těžko.")){
+      if(await askConfirm("Smazat objednávku?", "Opravdu tuto objednávku odstranit?")){
         try{
           const o = state.myOrders.find(x => x.id === oid) || state.allOrders.find(x => x.id === oid);
           const batch = db.batch();
@@ -965,7 +1677,7 @@ async function handleOrderBtns(container){
     }
     if(b.dataset.act === "del-user-orders"){
       const u = state.users.find(x => x.uid === uid);
-      if(await askConfirm("Smazat objednávky uživatele?", "Všechny objednávky uživatele @"+esc(u?u.username:uid)+" budou smazány.")){
+      if(await askConfirm("Smazat objednávky uživatele?", "Všechny objednávky uživatele @"+(u?u.username:uid)+" budou smazány.")){
         try{
           const s = await db.collection("orders").where("uid","==",uid).get();
           const batch = db.batch();
@@ -977,7 +1689,7 @@ async function handleOrderBtns(container){
     }
     if(b.dataset.act === "del-user"){
       const u = state.users.find(x => x.uid === uid);
-      if(await askConfirm("Smazat účet?", "Účet @"+esc(u?u.username:uid)+" přestane existovat, včetně jeho objednávek.")){
+      if(await askConfirm("Smazat účet?", "Účet @"+(u?u.username:uid)+" přestane existovat, včetně jeho objednávek.")){
         try{
           const s = await db.collection("orders").where("uid","==",uid).get();
           const batch = db.batch();
@@ -1010,20 +1722,21 @@ qs("#heroCandy").addEventListener("click", function(){
 /* ---------- PWA: manifest + service worker ---------- */
 (function(){
   const icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">'
-    + '<rect width="512" height="512" rx="110" fill="#FAF7F2"/>'
-    + '<g transform="translate(96,161) scale(1.45)">'
-    + '<path fill="#D64550" d="M80 65 C62 52 40 42 30 46 C20 50 22 62 22 65 C22 68 20 80 30 84 C40 88 62 78 80 65 Z"/>'
-    + '<path fill="#D64550" d="M140 65 C158 52 180 42 190 46 C200 50 198 62 198 65 C198 68 200 80 190 84 C180 88 158 78 140 65 Z"/>'
-    + '<rect fill="#D64550" x="76" y="41" width="68" height="48" rx="24"/>'
-    + '<path d="M104 47 q7 18 0 36 M116 45 q7 20 0 40" fill="none" stroke="#FAF7F2" stroke-width="4" stroke-linecap="round" opacity=".6"/>'
+    + '<rect width="512" height="512" rx="112" fill="#F5EFE4"/>'
+    + '<circle cx="256" cy="256" r="196" fill="#FFFDF9" stroke="#1E1916" stroke-width="14"/>'
+    + '<g transform="rotate(-15 256 256)">'
+    + '<path d="M168 256 L104 202 L124 256 L104 310 Z" fill="#C93B2B" stroke="#1E1916" stroke-width="14" stroke-linejoin="round"/>'
+    + '<path d="M344 256 L408 202 L388 256 L408 310 Z" fill="#C93B2B" stroke="#1E1916" stroke-width="14" stroke-linejoin="round"/>'
+    + '<rect x="164" y="182" width="184" height="148" rx="74" fill="#C93B2B" stroke="#1E1916" stroke-width="14"/>'
+    + '<path d="M226 192 C244 232 244 280 226 320 M284 192 C302 232 302 280 284 320" fill="none" stroke="#FFFDF9" stroke-width="16" stroke-linecap="round"/>'
     + '</g></svg>';
   const iconURI = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(icon);
   const fav = document.createElement("link"); fav.rel = "icon"; fav.href = iconURI;
   document.head.appendChild(fav);
   const manifest = {
-    name:"Přestávka", short_name:"Přestávka", description:"Studentská cukrárna",
+    name:"Přestávka", short_name:"Přestávka", description:"Studentská cukrárna — Sladký a Kyselý mix na patro 0–3",
     start_url: location.origin + location.pathname,
-    display:"standalone", background_color:"#FAF7F2", theme_color:"#FAF7F2",
+    display:"standalone", background_color:"#F5EFE4", theme_color:"#F5EFE4",
     icons:[{ src: iconURI, sizes:"any", type:"image/svg+xml", purpose:"any" }]
   };
   const m = document.createElement("link"); m.rel = "manifest";
